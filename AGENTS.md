@@ -57,7 +57,7 @@ cargo run --release --example dungeon
 **Augment Code Intent**:
 
 - This project uses Augment Code Intent intensively for context retrieval and codebase understanding
-- Reference `augment-context-engine_codebase-retrieval` tool for semantic searches
+- Reference `codebase-retrieval` tool for semantic searches
 
 **Context Loading**:
 

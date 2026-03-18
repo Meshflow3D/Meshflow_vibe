@@ -33,5 +33,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-[Unreleased]: https://github.com/anomalyco/meshflow-vibe/compare/v0.3.1...HEAD
-[0.3.1]: https://github.com/anomalyco/meshflow-vibe/releases/tag/v0.3.1
+[Unreleased]: https://github.com/Meshflow3D/Meshflow_vibe/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Meshflow3D/Meshflow_vibe/releases/tag/v0.3.1
