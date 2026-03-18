@@ -26,7 +26,7 @@
 //!
 //! Add the MeshflowVibe plugin group to your Bevy app:
 //!
-//! ```rust
+//! ```no_run
 //! use bevy::prelude::*;
 //! use meshflow_vibe::prelude::*;
 //! const STARTING_WORLD: &str = "scenes/starting.scene";
@@ -40,7 +40,6 @@
 //!            default_world: STARTING_WORLD.to_string(),
 //!            ..Default::default()
 //!        })
-//!        .add_systems(Startup, setup)
 //!        .run();
 //!}
 //! ```

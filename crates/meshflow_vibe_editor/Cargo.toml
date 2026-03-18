@@ -28,3 +28,6 @@ webbrowser = "1.0.5"
 [lib]
 name = "meshflow_vibe_editor"
 path = "src/lib.rs"
+
+[dev-dependencies]
+tempfile = { workspace = true }

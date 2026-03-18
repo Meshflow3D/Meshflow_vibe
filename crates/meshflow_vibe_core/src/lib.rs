@@ -16,6 +16,9 @@ pub mod setup;
 pub mod shared;
 pub mod world;
 
+#[cfg(test)]
+pub mod tests;
+
 // Internal plugins from modules
 use crate::assets::AssetPlugin;
 use crate::entities::EntityPlugin;
