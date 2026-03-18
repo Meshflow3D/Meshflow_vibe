@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     if: github.actor == 'mohit-meshflow'
@@ -23,5 +26,5 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/examples/dungeon
+          files: assets/scenes/cube.scene
           generate_release_notes: false
