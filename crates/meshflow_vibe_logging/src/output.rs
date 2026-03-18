@@ -8,10 +8,20 @@ use chrono::Local;
 use colored::*;
 use textwrap::wrap;
 
-// std out line width
+/// Maximum line width for console output.
+///
+/// Messages longer than this width will be wrapped for better readability.
 const MAX_LINE_WIDTH: usize = 78;
 
-// std out color
+/// Returns a formatted, colored level prefix for console output.
+///
+/// # Arguments
+///
+/// * `level` - The log level to format
+///
+/// # Returns
+///
+/// A `ColoredString` ready for console display.
 fn get_colored_level(level: LogLevel) -> ColoredString {
     match level {
         LogLevel::Info => " ".white(),
@@ -22,7 +32,16 @@ fn get_colored_level(level: LogLevel) -> ColoredString {
     }
 }
 
-// std out color
+/// Returns a formatted, colored message for console output.
+///
+/// # Arguments
+///
+/// * `level` - The log level (determines color)
+/// * `message` - The message text to colorize
+///
+/// # Returns
+///
+/// A `ColoredString` representing the colored message.
 fn get_colored_message(level: LogLevel, message: &str) -> ColoredString {
     match level {
         LogLevel::Info => message.white(),
@@ -33,7 +52,15 @@ fn get_colored_message(level: LogLevel, message: &str) -> ColoredString {
     }
 }
 
-//std out color
+/// Returns a formatted, colored type prefix for console output.
+///
+/// # Arguments
+///
+/// * `type_` - The log type to format
+///
+/// # Returns
+///
+/// A `ColoredString` representing "GAME " or "EDTR ".
 fn get_colored_type(r#type: LogType) -> ColoredString {
     match r#type {
         LogType::Game => "GAME ".dimmed(),
@@ -41,7 +68,15 @@ fn get_colored_type(r#type: LogType) -> ColoredString {
     }
 }
 
-// std out color
+/// Returns a formatted, colored category prefix for console output.
+///
+/// # Arguments
+///
+/// * `category` - The log category to format
+///
+/// # Returns
+///
+/// A `ColoredString` representing the category with appropriate styling.
 fn get_colored_category(category: LogCategory) -> ColoredString {
     match category {
         LogCategory::Entity => "[ENTITY]".purple().bold(),
@@ -56,7 +91,39 @@ fn get_colored_category(category: LogCategory) -> ColoredString {
     }
 }
 
-// Handles both buffer and stdout
+/// Core logging function that handles buffer, file, and console output.
+///
+/// This is the main entry point for all logging operations. It performs the following:
+/// 1. Creates a `LogEntry` with the provided data and a timestamp
+/// 2. Adds the entry to the in-memory buffer
+/// 3. Writes the entry to the log file
+/// 4. Outputs to console if the entry passes filtering checks
+///
+/// # Arguments
+///
+/// * `type_` - The log type (Game or Editor)
+/// * `level` - The severity level of the log
+/// * `category` - The category of the log
+/// * `message` - The log message content
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads.
+///
+/// # Example
+///
+/// This function is typically called via the `log!` macro:
+///
+/// ```rust,no_run
+/// use meshflow_vibe_logging::{log, LogCategory, LogLevel, LogType};
+///
+/// log!(
+///     LogType::Game,
+///     LogLevel::Info,
+///     LogCategory::System,
+///     "Application started"
+/// );
+/// ```
 pub fn log(r#type: LogType, level: LogLevel, category: LogCategory, message: String) {
     let timestamp = Local::now().format("%m/%d/%Y-%H:%M:%S ").to_string();
     let type_prefix = get_colored_type(r#type);
