@@ -280,7 +280,8 @@ SceneData(
     // Complete the save
     {
         let mut save_data = app.world_mut().resource_mut::<SaveWorldRequestData>();
-        if let Some((_key, (path, world_state))) = save_data.pending_saves.iter_mut().next() {
+        let pending_key = save_path_str.as_str();
+        if let Some((path, world_state)) = save_data.pending_saves.get_mut(pending_key) {
             world_state.components_ready = true;
             use std::collections::HashMap;
             world_state.component_data = Some(HashMap::new());
