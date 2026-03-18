@@ -319,7 +319,7 @@ pub fn disable_log_type(r#type: LogType) {
 /// # Example
 ///
 /// ```rust,no_run
-/// use meshflow_vibe_logging::setup_logging;
+/// use meshflow_vibe_logging::{setup_logging, log};
 ///
 /// // Initialize logging before any log calls
 /// setup_logging();

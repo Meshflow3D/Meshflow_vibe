@@ -1,0 +1,21 @@
+(
+	metadata: (
+		format_version: "0.1.4",
+		entity_count: 1,
+	),
+	entities: [(
+		identity: (
+			uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			name: "Cube",
+			class: OBJ((
+				mesh_path: "meshes/Cube.glb",
+				material: (),
+			)),
+		),
+		transform: (
+			position: (0.0, 0.0, 0.0),
+			rotation: (0.0, 0.0, 0.0, 1.0),
+			scale: (1.0, 1.0, 1.0),
+		),
+	)],
+)

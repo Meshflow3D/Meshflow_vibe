@@ -146,4 +146,5 @@ pub use config::{
     LogLevel, LogType, RgbaColor,
 };
 pub use entry::LogEntry;
+pub use file::write_to_file;
 pub use output::log;
