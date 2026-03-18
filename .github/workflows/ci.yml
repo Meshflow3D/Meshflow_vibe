@@ -23,19 +23,15 @@ jobs:
       - name: Check if CHANGELOG.md was modified
         id: check
         run: |
-          changed=$(git diff --name-only origin/main HEAD | grep -c CHANGELOG.md || true)
+          changed=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -c CHANGELOG.md || true)
           if [ "$changed" -gt 0 ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bypass if PR has skip-changelog label
-        if: contains(github.event.pull_request.labels.*.name, 'skip-changelog')
-        run: echo "changed=true" >> $GITHUB_OUTPUT
-
       - name: Fail if CHANGELOG.md was not modified
-        if: steps.check.outputs.changed == 'false'
+        if: steps.check.outputs.changed != 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
         run: |
           echo "::error::CHANGELOG.md must be modified in this PR."
           exit 1
