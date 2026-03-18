@@ -44,6 +44,16 @@ Next, check out the [examples](https://github.com/BlakeDarrow/meshflow-vibe/tree
 > cargo run --release --example dungeon
 > ```
 
+## Running Tests
+
+This project uses Rust's built-in test infrastructure. To run all tests locally:
+
+```bash
+cargo test --workspace --all-targets
+```
+
+The test suite includes unit tests, integration tests, and headless Bevy tests that run without requiring a display. These tests are automatically run in CI on every push and pull request to `main`.
+
 ---
 
 </details>

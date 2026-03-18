@@ -24,3 +24,8 @@ enum_dispatch = "0.3.13"
 [lib]
 name = "meshflow_vibe_core"
 path = "src/lib.rs"
+
+[dev-dependencies]
+bevy = { workspace = true, features = ["bevy_winit"] }
+serde_json = { workspace = true }
+tempfile = { workspace = true }

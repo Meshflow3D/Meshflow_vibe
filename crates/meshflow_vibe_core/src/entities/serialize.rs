@@ -16,7 +16,7 @@ use std::{
 };
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct SceneMetadata {
     pub format_version: Version,
     pub entity_count: usize,

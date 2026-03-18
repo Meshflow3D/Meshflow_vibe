@@ -40,7 +40,6 @@
 //!            default_world: STARTING_WORLD.to_string(),
 //!            ..Default::default()
 //!        })
-//!        .add_systems(Startup, setup)
 //!        .run();
 //!}
 //! ```

@@ -6,6 +6,8 @@ pub mod entities;
 pub mod input;
 pub mod interface;
 pub mod setup;
+#[cfg(test)]
+pub mod tests;
 pub mod utils;
 pub mod viewport;
 

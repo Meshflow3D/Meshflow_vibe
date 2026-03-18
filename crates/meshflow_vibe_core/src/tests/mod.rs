@@ -5,6 +5,10 @@
 pub mod basic;
 pub mod fixtures;
 pub mod helpers;
+pub mod integration;
+pub mod path_helpers;
+pub mod serialization;
+pub mod version;
 
 // Re-export commonly used items from fixtures
 pub use fixtures::*;
