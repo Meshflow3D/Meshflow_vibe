@@ -60,9 +60,9 @@
 //! // Access the log buffer (useful for UI display)
 //! {
 //!     let buffer = LOG_BUFFER.lock().unwrap();
-//!     for entry in buffer.iter().take(10) {
-//!         println!("{}: {}", entry.category, entry.message);
-//!     }
+//!         for entry in buffer.iter().take(10) {
+//!             println!("{:?}: {}", entry.category, entry.message);
+//!         }
 //! }
 //!
 //! // Manually push a log entry

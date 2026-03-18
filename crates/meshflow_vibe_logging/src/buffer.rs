@@ -28,7 +28,7 @@ const MAX_LOG_ENTRIES: usize = 7_500;
 /// {
 ///     let buffer = LOG_BUFFER.lock().unwrap();
 ///     for entry in buffer.iter() {
-///         println!("{}: {}", entry.category, entry.message);
+///         println!("{:?}: {}", entry.category, entry.message);
 ///     }
 /// }
 ///

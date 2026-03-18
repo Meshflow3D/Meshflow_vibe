@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/crates/v/meshflow_vibe.svg)](https://crates.io/crates/meshflow_vibe)
 [![License](https://img.shields.io/crates/l/meshflow_vibe)](LICENSE-MIT)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/BlakeDarrow/meshflow-vibe/ci.yml?branch=main)](https://github.com/BlakeDarrow/meshflow-vibe/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Meshflow3D/Meshflow_vibe/ci.yml?branch=main)](https://github.com/Meshflow3D/Meshflow_vibe/actions)
 [![Bevy 0.18](https://img.shields.io/badge/Bevy-0.18.1-orange.svg)](https://bevyengine.org)
 
 This crate provides a way to interactively create, edit, save, and load Bevy data in 3D.
@@ -89,7 +89,7 @@ fn main() {
 
 ## Examples
 
-Check out the [examples](https://github.com/BlakeDarrow/meshflow-vibe/tree/main/examples) which showcase how to set up a project.
+Check out the [examples](https://github.com/Meshflow3D/Meshflow_vibe/tree/main/examples) which showcase how to set up a project.
 
 ### Dungeon Example
 
@@ -144,7 +144,7 @@ The test suite includes unit tests, integration tests, and headless Bevy tests t
 
 Full API documentation is available at:
 - [API Docs](https://docs.rs/meshflow_vibe) - Crates.io documentation
-- [GitHub Repository](https://github.com/BlakeDarrow/meshflow-vibe) - Source code and examples
+- [GitHub Repository](https://github.com/Meshflow3D/Meshflow_vibe) - Source code and examples
 
 Generate local documentation with:
 
@@ -164,7 +164,7 @@ An entity is stored as three main parts:
 - **Transform**: Describes the entity's position, rotation, and scale. This determines where the entity is located and how it is oriented in the world.
 - **Components**: (Optional) Holds additional data or behaviors attached to the entity. This is where you extend the entity's functionality via the `#[granite_component]` macro.
 
-A scene file contains metadata and a list of serializable entity data. Check out the [assets/scenes](https://github.com/BlakeDarrow/meshflow-vibe/tree/main/assets/scenes) for scene examples.
+A scene file contains metadata and a list of serializable entity data. Check out the [assets/scenes](https://github.com/Meshflow3D/Meshflow_vibe/tree/main/assets/scenes) for scene examples.
 
 ### Callable Events
 
@@ -270,8 +270,8 @@ Meshflow Vibe is free and open source. Except when noted, all assets are license
 
 ## Contributors
 
-<a href="https://github.com/BlakeDarrow/meshflow-vibe/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=BlakeDarrow/meshflow-vibe" />
+<a href="https://github.com/Meshflow3D/Meshflow_vibe/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Meshflow3D/Meshflow_vibe" />
 </a>
 
 ---
@@ -280,8 +280,8 @@ Meshflow Vibe is free and open source. Except when noted, all assets are license
 
 If you have any feedback or questions, please reach out via:
 
-- [GitHub Issues](https://github.com/BlakeDarrow/meshflow-vibe/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/BlakeDarrow/meshflow-vibe/discussions) - Questions and general discussion
+- [GitHub Issues](https://github.com/Meshflow3D/Meshflow_vibe/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/Meshflow3D/Meshflow_vibe/discussions) - Questions and general discussion
 
 ---
 

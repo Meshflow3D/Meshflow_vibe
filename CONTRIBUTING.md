@@ -14,7 +14,7 @@ Thank you for your interest in contributing to Meshflow Vibe! This guide covers 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-org/meshflow-vibe.git
+   git clone https://github.com/Meshflow3D/Meshflow_vibe.git
    cd meshflow-vibe
    ```
 

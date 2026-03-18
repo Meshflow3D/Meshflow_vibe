@@ -496,7 +496,7 @@ pub fn draw_axis_lines(
         TransformGizmo::Axis => {
             render_line(
                 &mut asset,
-                &axis,
+                axis,
                 origin,
                 entity_rotation,
                 gizmo_config.mode(),
