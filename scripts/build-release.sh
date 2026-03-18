@@ -62,11 +62,11 @@ cp "$BINARY_PATH" "$APP_BUNDLE/Contents/MacOS/cube_demo"
 # Make binary executable
 chmod +x "$APP_BUNDLE/Contents/MacOS/cube_demo"
 
-# Copy assets directory to .app bundle (Bevy reads from base_path + "assets")
+# Copy assets directory to .app bundle (Bevy reads from base_path + "assets", resolves relative to Contents/MacOS/)
 echo "Copying assets to .app bundle..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/Resources/"
+cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/MacOS/"
 
 # Create DMG using hdiutil (built-in macOS tool)
 echo "Creating DMG: $DMG_PATH"
