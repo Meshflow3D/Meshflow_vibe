@@ -1,7 +1,7 @@
 //dungeon.scene designed by Noah Booker
 use bevy::prelude::*;
-use bevy_granite::prelude::*;
-use bevy_granite_core::entities::SaveSettings;
+use meshflow_vibe::prelude::*;
+use meshflow_vibe_core::entities::SaveSettings;
 
 const STARTING_WORLD: &str = "scenes/dungeon.scene";
 
@@ -18,7 +18,7 @@ struct AnotherComponent {
 impl Default for AnotherComponent {
     fn default() -> Self {
         AnotherComponent {
-            message: "Hello, Granite!".to_string(),
+            message: "Hello, Meshflow Vibe!".to_string(),
         }
     }
 }
@@ -28,7 +28,7 @@ fn main() {
     register_editor_components!();
 
     app.add_plugins(DefaultPlugins)
-        .add_plugins(bevy_granite::BevyGranite {
+        .add_plugins(meshflow_vibe::MeshflowVibe {
             default_world: STARTING_WORLD.to_string(),
             ..Default::default()
         })

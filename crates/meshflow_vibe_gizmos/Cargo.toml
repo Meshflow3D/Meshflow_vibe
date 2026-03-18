@@ -1,0 +1,19 @@
+[package]
+name = "meshflow_vibe_gizmos"
+version = "0.3.1"
+edition = "2021"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_gizmos", "bevy_picking"] }
+bevy_egui = { workspace = true }
+bevy_obj = { workspace = true }
+native-dialog = { workspace = true }
+uuid = { workspace = true }
+bevy-inspector-egui = { workspace = true }
+
+meshflow_vibe_logging = { path = "../meshflow_vibe_logging"}
+meshflow_vibe_core = { path = "../meshflow_vibe_core"}
+
+[lib]
+name = "meshflow_vibe_gizmos"
+path = "src/lib.rs"

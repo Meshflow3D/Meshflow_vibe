@@ -1,6 +1,6 @@
 
 
-# Bevy Granite 
+# Meshflow Vibe 
 
 This crate provides a way to interactively create, edit, save, and load Bevy data in 3D.
 
@@ -18,12 +18,12 @@ This crate provides a way to interactively create, edit, save, and load Bevy dat
 <summary>Getting Started</summary>
 
 
-Navigate to your projects Cargo.toml and add `bevy_granite`.
+Navigate to your projects Cargo.toml and add `meshflow_vibe`.
 
 ```rust
 [dependencies]
-bevy = "0.16.0"
-bevy_granite = { git = "https://github.com/BlakeDarrow/bevy_granite", branch = "main" }
+bevy = "0.18.1"
+meshflow_vibe = { git = "https://github.com/Meshflow3D/Meshflow_vibe", branch = "main" }
 serde = "*"
 ```
 
@@ -35,7 +35,7 @@ There are 3 optional feature sets.
 
 ## Examples
 
-Next, check out the [examples](https://github.com/BlakeDarrow/bevy_granite/tree/main/examples) which showcase how you can setup a project. 
+Next, check out the [examples](https://github.com/BlakeDarrow/meshflow-vibe/tree/main/examples) which showcase how you can setup a project. 
 *Dungeon* provides a simple entry point file with code ready to start editing. Just make sure you copy over the relevant assets subfolder folder or you will get errors.
 
 > If you clone this repo directly, you can use the example argument to launch straight into an example.
@@ -51,11 +51,11 @@ Next, check out the [examples](https://github.com/BlakeDarrow/bevy_granite/tree/
 
 # Support Table
 
-| bevy | bevy_granite        |
+| bevy | meshflow_vibe       |
 | ---- | --------------------|
-| 0.17 | 0.3.0 - 0.3.1       |
+| 0.18 | 0.3.1               |
+| 0.17 | 0.3.0               |
 | 0.16 | 0.2.0 - 0.2.2       |
-| 0.15 | None                |
 | 0.14 | 0.1.0               |
 
 
@@ -71,7 +71,7 @@ An entity is stored as three main parts:
 - **Transform**: Describes the entity’s position, rotation, and scale. This determines where the entity is located and how it is oriented in the world.
 - **Components**: (Optional) Holds additional data or behaviors attached to the entity. This is where you extend the entity’s functionality via the `#[granite_component]` macro.
 
-A scene file contains metadata and a list of serializable entity data. Check out the [assets/scenes](https://github.com/BlakeDarrow/bevy_granite/tree/main/assets/scenes) for scene examples.
+A scene file contains metadata and a list of serializable entity data. Check out the [assets/scenes](https://github.com/BlakeDarrow/meshflow-vibe/tree/main/assets/scenes) for scene examples.
 
 ### Callable Events
 
@@ -169,7 +169,7 @@ pub fn debug_callable_watcher(
 
 # License
 
-Bevy Granite is free and open source. Except when noted, all assets are licensed under either:
+Meshflow Vibe is free and open source. Except when noted, all assets are licensed under either:
 
 - MIT License (LICENSE-MIT or http://opensource.org/licenses/MIT)
 - Apache License, Version 2.0 (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
@@ -179,14 +179,14 @@ Bevy Granite is free and open source. Except when noted, all assets are licensed
 
 # Contributors
 
-<a href="https://github.com/BlakeDarrow/bevy_granite/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=BlakeDarrow/bevy_granite" />
+<a href="https://github.com/BlakeDarrow/meshflow-vibe/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=BlakeDarrow/meshflow-vibe" />
 </a>
 
 
 # Additional Info
 
-If you have any feedback, please reach out to me via a [GitHub issue](https://github.com/BlakeDarrow/bevy_granite/issues). I look forward to maintaining and improving this tool and am happy to hear y'alls opinions.
+If you have any feedback, please reach out to me via a [GitHub issue](https://github.com/BlakeDarrow/meshflow-vibe/issues). I look forward to maintaining and improving this tool and am happy to hear y'alls opinions.
 
 #### Special Thanks
 

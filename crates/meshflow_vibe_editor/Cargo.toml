@@ -1,0 +1,30 @@
+[package]
+name = "meshflow_vibe_editor"
+version = "0.3.1"
+edition = "2021"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_winit"]}
+toml = { workspace = true }
+bevy-inspector-egui = { workspace = true }
+bevy_egui = { workspace = true }
+bevy_obj = { workspace = true }
+uuid = { workspace = true }
+serde = { workspace =  true}
+native-dialog = { workspace = true }
+ron = { workspace = true }
+lazy_static = { workspace = true }
+arboard = "3.4"
+
+meshflow_vibe_gizmos = { path = "../meshflow_vibe_gizmos"}
+meshflow_vibe_core = { path = "../meshflow_vibe_core"}
+meshflow_vibe_logging = { path = "../meshflow_vibe_logging"}
+meshflow_vibe_expose = { path = "../meshflow_vibe_expose" }
+meshflow_vibe_macros = { path = "../meshflow_vibe_macros" }
+
+egui_dock = {version = "0.18.0", features = ["serde"]}
+webbrowser = "1.0.5"
+
+[lib]
+name = "meshflow_vibe_editor"
+path = "src/lib.rs"

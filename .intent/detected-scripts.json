@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "detectedAt": "2026-03-17T17:14:47.631Z",
+  "packageManager": "npm",
+  "manifestHash": "7a7ace170808a93c49acf2a204623f719c810073576edeed5c13c6a23a74b220",
+  "scripts": [
+    {
+      "name": "build",
+      "command": "cargo build",
+      "category": "build",
+      "mode": "command"
+    },
+    {
+      "name": "test",
+      "command": "cargo test",
+      "category": "test",
+      "mode": "command"
+    },
+    {
+      "name": "check",
+      "command": "cargo check",
+      "category": "typecheck",
+      "mode": "command"
+    }
+  ]
+}
