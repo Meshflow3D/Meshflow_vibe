@@ -62,6 +62,12 @@ cp "$BINARY_PATH" "$APP_BUNDLE/Contents/MacOS/cube_demo"
 # Make binary executable
 chmod +x "$APP_BUNDLE/Contents/MacOS/cube_demo"
 
+# Copy assets directory to .app bundle (Bevy reads from base_path + "assets")
+echo "Copying assets to .app bundle..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/Resources/"
+
 # Create DMG using hdiutil (built-in macOS tool)
 echo "Creating DMG: $DMG_PATH"
 hdiutil create -volname "$APP_NAME" \
@@ -74,5 +80,6 @@ echo "=== Build Complete ==="
 echo "DMG location: $DMG_PATH"
 echo "Size: $(ls -lh "$DMG_PATH" | awk '{print $5}')"
 
-# Display DMG info
-hdiutil info "$DMG_PATH" | grep -E "(Volume|Size|Format)"
+# Display DMG info using ls (hdiutil info doesn't accept file paths as arguments)
+echo "DMG details:"
+ls -lh "$DMG_PATH" | awk '{print "  Size: " $5 "\n  Location: " $9}'
