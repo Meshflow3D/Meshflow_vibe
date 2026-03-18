@@ -16,6 +16,8 @@
 //! use meshflow_vibe_macros::granite_component;
 //! use meshflow_vibe_macros::register_editor_components;
 //! use meshflow_vibe_macros::ui_callable_events;
+//! use bevy::app::App;
+//! use bevy::prelude::Startup;
 //!
 //! #[granite_component]
 //! pub struct MyComponent {
@@ -27,8 +29,10 @@
 //!     pub data: String,
 //! }
 //!
-//! pub fn setup(app: &mut bevy::app::App) {
-//!     app.add_systems(Startup, register_editor_components!);
+//! pub fn setup(app: &mut App) {
+//!     app.add_systems(Startup, |app: &mut App| {
+//!         register_editor_components!(app);
+//!     });
 //! }
 //! ```
 //!
@@ -164,14 +168,10 @@ pub fn granite_component(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// use meshflow_vibe_macros::register_editor_components;
+/// use bevy::app::App;
+/// use bevy::prelude::Startup;
 ///
-/// fn main() {
-///     App::new()
-///         .add_systems(Startup, register_editor_components!)
-///         .run();
-/// }
-///
-/// // Or with explicit app reference:
+/// // With explicit app reference:
 /// fn setup(app: &mut App) {
 ///     app.add_systems(Startup, |app: &mut App| {
 ///         register_editor_components!(app);

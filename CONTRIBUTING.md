@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Meshflow Vibe! This guide covers 
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/Meshflow3D/Meshflow_vibe.git
-   cd meshflow-vibe
+    cd Meshflow_vibe
    ```
 
 2. **Build the project**:
@@ -25,7 +25,7 @@ Thank you for your interest in contributing to Meshflow Vibe! This guide covers 
 
 3. **Run the editor**:
    ```bash
-   cargo run --workspace
+   cargo run --package meshflow_vibe
    ```
 
 4. **Run the dungeon example**:
