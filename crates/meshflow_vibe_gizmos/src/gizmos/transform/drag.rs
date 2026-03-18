@@ -1,3 +1,22 @@
+//! Transformation gizmo drag interaction and rendering.
+//!
+//! This module handles:
+//! - Dragging transform gizmo axes and planes
+//! - Calculating drag offsets
+//! - Rendering temporary axis lines for gizmo interaction
+//! - Applying transformations to selected entities
+//! - Cleanup of temporary gizmo elements
+//!
+//! # Main Functions
+//!
+//! - `drag_transform_gizmo`: Process drag events for transform gizmos
+//! - `calculate_drag_offset`: Compute initial drag offset on drag start
+//! - `drag_end_cleanup`: Remove drag offset components after drag ends
+//! - `apply_transformations`: Apply delta transformations to objects
+//! - `dragstart_transform_gizmo`: Handle shift+drag duplication
+//! - `draw_axis_lines`: Render temporary axis lines on press
+//! - `cleanup_axis_line`: Remove temporary axis lines on release
+
 use super::TransformGizmo;
 use crate::{
     gizmos::{GizmoConfig, GizmoMode, GizmoOf, GizmoRoot, GizmoSnap},
@@ -5,6 +24,10 @@ use crate::{
     selection::{ActiveSelection, RequestDuplicateAllSelectionEvent, Selected},
     GizmoCamera,
 };
+
+/// Marker component for temporary axis line gizmos created during drag interaction.
+#[derive(Component)]
+pub struct AxisLine;
 use bevy::{
     asset::Assets,
     ecs::{
@@ -27,11 +50,39 @@ use meshflow_vibe_logging::{
     log,
 };
 
+/// State resource for tracking transform gizmo duplication operations.
+///
+/// This resource is used to prevent accidental duplication during drag operations
+/// by tracking when a duplication has just occurred.
 #[derive(Resource, Default)]
 pub struct TransformDuplicationState {
+    /// Whether a duplication has just occurred and should be ignored.
     pub just_duplicated: bool,
 }
 
+/// Handle drag events for transform gizmos.
+///
+/// This function processes drag events on transform gizmo entities to:
+/// - Calculate the drag offset and direction
+/// - Transform selected entities along the appropriate axis or plane
+/// - Apply snapping based on configured snap values
+/// - Handle camera movement when Ctrl is pressed
+///
+/// # Arguments
+/// * `event` - The drag event containing entity and input information
+/// * `command` - Bevy Commands for entity manipulation
+/// * `targets` - Query for GizmoOf components to find target entities
+/// * `camera_query` - Query for gizmo camera entities and transforms
+/// * `objects` - Query for mutable Transform components on objects
+/// * `global_transforms` - Query for GlobalTransform components
+/// * `parents` - Query for ChildOf components to find hierarchy
+/// * `active_selection` - Query for actively selected entity
+/// * `other_selected` - Query for other selected entities
+/// * `gizmo_snap` - Resource containing snap configuration
+/// * `gizmo_data` - Query for gizmo axis, type, offset, and root
+/// * `gizmo_config_query` - Query for gizmo configuration
+/// * `user_input` - Resource containing current user input state
+/// * `duplication_state` - Mutable reference to duplication state resource
 pub fn drag_transform_gizmo(
     event: On<Pointer<Drag>>,
     mut command: Commands,
@@ -240,6 +291,18 @@ pub fn drag_transform_gizmo(
     }
 }
 
+/// Calculate and store the initial drag offset when a drag operation starts.
+///
+/// This function computes the offset between the gizmo's origin and the cursor
+/// position at the start of a drag, storing it as a component on the gizmo entity.
+/// If the cursor position cannot be resolved, it falls back to using the center
+/// of the target object.
+///
+/// # Arguments
+/// * `event` - The drag start event
+/// * `command` - Bevy Commands for adding components
+/// * `object` - Query for GlobalTransform of entities with children
+/// * `gizmo_data` - Query for gizmo entity and GizmoOf components
 pub fn calculate_drag_offset(
     event: On<Pointer<DragStart>>,
     mut command: Commands,
@@ -277,6 +340,15 @@ pub fn calculate_drag_offset(
     ));
 }
 
+/// Clean up initial drag offset components after a drag operation ends.
+///
+/// This function removes `InitialDragOffset` components from all gizmo entities
+/// when the drag operation ends, ensuring clean state for the next interaction.
+///
+/// # Arguments
+/// * `event` - The drag end event
+/// * `command` - Bevy Commands for removing components
+/// * `gizmo_data` - Query for entities with InitialDragOffset components
 pub fn drag_end_cleanup(
     event: On<Pointer<DragEnd>>,
     mut command: Commands,
@@ -290,6 +362,15 @@ pub fn drag_end_cleanup(
     }
 }
 
+/// Apply transformation deltas to objects and clean up delta components.
+///
+/// This function iterates over all objects with TransitionDelta components,
+/// applies the delta translation to their Transform, and removes the delta
+/// component to prevent double application.
+///
+/// # Arguments
+/// * `command` - Bevy Commands for removing components
+/// * `objects` - Query for entities with mutable Transform and TransitionDelta
 pub fn apply_transformations(
     mut command: Commands,
     objects: Query<(Entity, &mut Transform, &TransitionDelta)>,
@@ -300,6 +381,21 @@ pub fn apply_transformations(
     }
 }
 
+/// Handle drag start for duplicating selected entities.
+///
+/// This function creates a duplicate of all selected entities when:
+/// - The mouse middle button is pressed
+/// - The Shift key is held down
+///
+/// This provides a quick way to duplicate objects while manipulating gizmos.
+///
+/// # Arguments
+/// * `event` - The drag start event
+/// * `targets` - Query for GizmoOf components
+/// * `gizmo_data` - Query for gizmo axis and type
+/// * `user_input` - Resource containing user input state
+/// * `dispatch` - Message writer for duplication events
+/// * `duplication_state` - Mutable reference to duplication state
 pub fn dragstart_transform_gizmo(
     event: On<Pointer<DragStart>>,
     targets: Query<&GizmoOf>,
@@ -322,6 +418,14 @@ pub fn dragstart_transform_gizmo(
     duplication_state.just_duplicated = true;
 }
 
+/// Snap a vector value to the nearest increment.
+///
+/// # Arguments
+/// * `value` - The vector value to snap
+/// * `inc` - The increment to snap to (0.0 returns value unchanged)
+///
+/// # Returns
+/// The snapped vector value
 fn snap_gizmo(value: Vec3, inc: f32) -> Vec3 {
     if inc == 0.0 {
         value
@@ -330,6 +434,20 @@ fn snap_gizmo(value: Vec3, inc: f32) -> Vec3 {
     }
 }
 
+/// Draw temporary axis lines when pressing on transform gizmo elements.
+///
+/// This function creates visual axis lines at the press location to help
+/// users understand which axis or plane they are interacting with. The lines
+/// are spawned as temporary gizmos and will be cleaned up when the mouse
+/// button is released.
+///
+/// # Arguments
+/// * `event` - The press event
+/// * `gizmo_data` - Query for gizmo axis, target, type, and root
+/// * `gizmo_config_query` - Query for gizmo configuration
+/// * `bevy_gizmo` - Mutable resource for gizmo assets
+/// * `commands` - Bevy Commands for spawning entities
+/// * `origin` - Query for origin transform
 pub fn draw_axis_lines(
     event: On<Pointer<Press>>,
     gizmo_data: Query<(&GizmoAxis, &GizmoOf, &TransformGizmo, &GizmoRoot), With<TransformGizmo>>,
@@ -378,7 +496,7 @@ pub fn draw_axis_lines(
         TransformGizmo::Axis => {
             render_line(
                 &mut asset,
-                axis,
+                &axis,
                 origin,
                 entity_rotation,
                 gizmo_config.mode(),
@@ -392,7 +510,7 @@ pub fn draw_axis_lines(
     }
 
     commands.spawn((
-        *axis,
+        axis.clone(),
         GizmoOf(root.0),
         Gizmo {
             handle: bevy_gizmo.add(asset),
@@ -402,6 +520,18 @@ pub fn draw_axis_lines(
     ));
 }
 
+/// Render a series of line segments along a gizmo axis.
+///
+/// This function draws multiple line segments spaced by `step` along the
+/// axis direction, from `-max_distance` to `+max_distance` from the origin.
+/// The lines are rendered in the appropriate color for the axis.
+///
+/// # Arguments
+/// * `asset` - Mutable reference to the gizmo asset to add lines to
+/// * `axis` - The gizmo axis to render along
+/// * `origin` - The origin transform for the gizmo
+/// * `entity_rotation` - The rotation of the entity in local/global space
+/// * `mode` - The gizmo mode (Local or Global)
 fn render_line(
     asset: &mut GizmoAsset,
     axis: &GizmoAxis,
@@ -428,6 +558,16 @@ fn render_line(
     }
 }
 
+/// Clean up temporary axis line gizmos when the mouse button is released.
+///
+/// This function despawns all entities with the `AxisLine` marker component
+/// when the left mouse button is released, removing the temporary visual
+/// axis lines drawn during drag interactions.
+///
+/// # Arguments
+/// * `commands` - Bevy Commands for despawning entities
+/// * `query` - Query for entities with AxisLine component
+/// * `user_input` - Resource containing user input state
 pub fn cleanup_axis_line(
     mut commands: Commands,
     query: Query<Entity, With<AxisLine>>,
@@ -440,16 +580,27 @@ pub fn cleanup_axis_line(
     }
 }
 
-#[derive(Component)]
-pub struct AxisLine;
-
+/// Component storing the transformation delta for an object.
+///
+/// This component is added to objects when they are being transformed
+/// via gizmo drag and is removed after the transformation is applied.
 #[derive(Component)]
 pub struct TransitionDelta(Vec3);
 
+/// Component storing the initial drag offset for a gizmo.
+///
+/// This component is added to gizmo entities when a drag operation starts,
+/// storing the offset between the gizmo origin and the cursor position.
+/// It is used to calculate accurate transformations during drag operations.
 #[derive(Component)]
 pub struct InitialDragOffset(Vec3);
 
 impl InitialDragOffset {
+    /// Get the initial drag offset as a Vec3.
+    ///
+    /// # Returns
+    /// The offset vector representing the difference between the gizmo
+    /// origin and the cursor position at drag start.
     pub fn offset(&self) -> Vec3 {
         self.0
     }
