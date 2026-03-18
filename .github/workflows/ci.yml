@@ -36,7 +36,7 @@ jobs:
           echo "::error::CHANGELOG.md must be modified in this PR."
           exit 1
 
-  test:
+  format:
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     needs: [changelog]
     runs-on: macos-latest
@@ -55,14 +55,71 @@ jobs:
             ${{ runner.os }}-cargo-
             ${{ runner.os }}-
 
-      - name: Run tests
-        run: cargo test --workspace --all-targets
+      - name: Run format check
+        run: cargo fmt --all -- --check
 
-      - name: Run doctests
-        run: cargo test --workspace --doc
+  clippy:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    needs: [changelog, format]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          prefix-key: ${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-
 
       - name: Run clippy
         run: cargo clippy --workspace --all-targets
 
-      - name: Run format check
-        run: cargo fmt --all -- --check
+  doctests:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    needs: [changelog, format, clippy]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          prefix-key: ${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-
+
+      - name: Run doctests
+        run: cargo test --workspace --doc
+
+  test:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    needs: [changelog, format, clippy, doctests]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          prefix-key: ${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-
+
+      - name: Run tests
+        run: cargo test --workspace --all-targets

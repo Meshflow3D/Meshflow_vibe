@@ -27,8 +27,7 @@
 /// log!(
 ///     LogLevel::Warning,
 ///     LogCategory::UI,
-///     "UI element not found: {}",
-///     "main_menu"
+///     "UI element not found"
 /// );
 /// ```
 ///
@@ -67,7 +66,6 @@
 ///
 /// let error_code = 42;
 /// log!("Error {}: Operation failed", error_code);
-/// log!("Position: ({}, {})", x, y);
 /// ```
 ///
 /// # Output
