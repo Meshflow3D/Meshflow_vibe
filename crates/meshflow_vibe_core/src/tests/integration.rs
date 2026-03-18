@@ -280,14 +280,15 @@ SceneData(
     // Complete the save
     {
         let mut save_data = app.world_mut().resource_mut::<SaveWorldRequestData>();
-        if let Some((_, world_state)) = save_data.pending_saves.get_mut(save_path_str.as_str()) {
+        // Find the actual key (path is transformed by absolute_asset_to_rel)
+        if let Some((pending_key, world_state)) = save_data.pending_saves.iter_mut().next() {
             world_state.components_ready = true;
             use std::collections::HashMap;
             world_state.component_data = Some(HashMap::new());
+            app.world_mut()
+                .resource_mut::<bevy::prelude::Messages<RuntimeDataReadyEvent>>()
+                .write(RuntimeDataReadyEvent(pending_key.to_string()));
         }
-        app.world_mut()
-            .resource_mut::<bevy::prelude::Messages<RuntimeDataReadyEvent>>()
-            .write(RuntimeDataReadyEvent(save_path_str.clone()));
     }
     app.update();
 
