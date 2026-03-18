@@ -1,12 +1,15 @@
+use crate::editor_state::{update_active_world_system, update_editor_vis_system, EditorState};
+use crate::interface::{EditorSettingsTabData, RequestEditorToggle, SetActiveWorld};
 /// Headless editor flow tests.
 ///
 /// These tests exercise editor message-driven seams without requiring a windowed context.
 /// They verify editor state transitions and config workflows that would be triggered
 /// by GUI interactions in a real session.
 use bevy::prelude::*;
-use crate::editor_state::{EditorState, update_active_world_system, update_editor_vis_system};
-use crate::interface::{EditorSettingsTabData, RequestEditorToggle, SetActiveWorld};
-use meshflow_vibe_core::events::{WorldLoadSuccessEvent, WorldSaveSuccessEvent, RequestDespawnSerializableEntities, RequestDespawnBySource};
+use meshflow_vibe_core::events::{
+    RequestDespawnBySource, RequestDespawnSerializableEntities, WorldLoadSuccessEvent,
+    WorldSaveSuccessEvent,
+};
 use meshflow_vibe_gizmos::GizmoVisibilityState;
 use std::fs;
 use tempfile::tempdir;

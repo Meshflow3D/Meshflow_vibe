@@ -109,7 +109,7 @@ pub fn update_editor_settings_tab_system(
         if let SideTab::EditorSettings { ref mut data, .. } = tab {
             let mut settings_desynced = false;
 
-            if editor_state.config_loaded && editor_state.layout_loaded {
+            if editor_state.config_loaded {
                 **data = editor_state.config.clone();
                 editor_state.config_loaded = false;
                 settings_desynced = true;
@@ -122,8 +122,6 @@ pub fn update_editor_settings_tab_system(
             // Sync scene light between UI and resource
             if data.scene_light_enabled != scene_light_state.enabled {
                 scene_light_state.set_enabled(data.scene_light_enabled);
-            } else if scene_light_state.enabled != data.scene_light_enabled {
-                data.scene_light_enabled = scene_light_state.enabled;
             }
 
             if theme_state.theme_changed || settings_desynced {

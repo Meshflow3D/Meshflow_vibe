@@ -53,7 +53,7 @@ use std::sync::Mutex;
 use syn::{parse_macro_input, DeriveInput};
 
 #[cfg(test)]
-mod tests;
+mod macro_tests;
 
 static REGISTERED_COMPONENTS: Lazy<Mutex<Vec<(String, bool)>>> =
     Lazy::new(|| Mutex::new(Vec::new()));

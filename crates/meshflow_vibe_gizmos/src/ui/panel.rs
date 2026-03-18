@@ -94,31 +94,31 @@ pub fn editor_gizmos_ui(
                                 ui.add_space(spacing);
                                 ui.label("Vertex");
                                 ui.add_space(spacing);
-                                    
+
                                     egui::Grid::new("vertex_transform_grid")
                                         .num_columns(4)
                                         .spacing([2.0, 2.0])
                                         .striped(false)
                                         .show(ui, |ui| {
                                             let drag_width = 60.0;
-                                            
+
                                             ui.label("Position: ");
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut pos.x.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut pos.y.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut pos.z.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.end_row();
-                                            
+
                                             let rot_degrees = (
-                                                rot.1.to_degrees(), 
-                                                rot.0.to_degrees(), 
-                                                rot.2.to_degrees(), 
+                                                rot.1.to_degrees(),
+                                                rot.0.to_degrees(),
+                                                rot.2.to_degrees(),
                                             );
                                             ui.label("Rotation: ");
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.0.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.1.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.2.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.end_row();
-                                            
+
                                             ui.label("Scale: ");
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut scale.x.clone()).speed(0.01).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                             ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut scale.y.clone()).speed(0.01).max_decimals(2).min_decimals(2).fixed_decimals(2));
@@ -127,7 +127,7 @@ pub fn editor_gizmos_ui(
                                         });
 
                                     ui.add_space(spacing);
-                                    
+
                                     if ui.button("Copy").clicked() {
                                         let affine = global_transform.affine();
                                         let matrix = affine.matrix3;
@@ -148,7 +148,7 @@ pub fn editor_gizmos_ui(
                                 let mut avg_rotation = bevy::prelude::Quat::IDENTITY;
                                 let mut avg_scale = bevy::prelude::Vec3::ZERO;
                                 let count = selected_vertices.iter().count() as f32;
-                                
+
                                 if count > 0.0 {
                                     for (_marker, transform) in selected_vertices.iter() {
                                         let (scale, rotation, _pos) = transform.to_scale_rotation_translation();
@@ -161,37 +161,37 @@ pub fn editor_gizmos_ui(
                                     }
                                     avg_scale /= count;
                                 }
-                                
+
                                 let rot = avg_rotation.to_euler(bevy::prelude::EulerRot::YXZ);
                                 let rot_degrees = (
-                                    rot.1.to_degrees(), 
-                                    rot.0.to_degrees(), 
-                                    rot.2.to_degrees(), 
+                                    rot.1.to_degrees(),
+                                    rot.0.to_degrees(),
+                                    rot.2.to_degrees(),
                                 );
 
                                 ui.add_space(spacing);
                                 ui.label("Midpoint");
                                 ui.add_space(spacing);
-                                
+
                                 egui::Grid::new("midpoint_transform_grid")
                                     .num_columns(4)
                                     .spacing([2.0, 2.0])
                                     .striped(false)
                                     .show(ui, |ui| {
                                         let drag_width = 60.0;
-                                        
+
                                         ui.label("Position: ");
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut midpoint.x.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut midpoint.y.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut midpoint.z.clone()).speed(0.1).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.end_row();
-                                        
+
                                         ui.label("Rotation: ");
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.0.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.1.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut rot_degrees.2.clone()).speed(1.0).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.end_row();
-                                        
+
                                         ui.label("Scale: ");
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut avg_scale.x.clone()).speed(0.01).max_decimals(2).min_decimals(2).fixed_decimals(2));
                                         ui.add_sized([drag_width, 20.0], egui::DragValue::new(&mut avg_scale.y.clone()).speed(0.01).max_decimals(2).min_decimals(2).fixed_decimals(2));
@@ -200,7 +200,7 @@ pub fn editor_gizmos_ui(
                                     });
 
                                 ui.add_space(spacing);
-                                
+
                                 // Copy midpoint matrix button
                                 if ui.button("Copy").clicked() {
                                     let affine = bevy::math::Affine3A::from_scale_rotation_translation(

@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 use bevy::{
     app::PostStartup,
     ecs::schedule::IntoScheduleConfigs,

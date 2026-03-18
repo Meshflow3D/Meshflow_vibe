@@ -224,15 +224,15 @@ fn build_scene_light_section(ui: &mut egui::Ui, scene_light_enabled: &mut bool) 
     ui.vertical(|ui| {
         ui.group(|ui| {
             ui.add_space(large_spacing);
-            
+
             ui.vertical(|ui| {
                 ui.label("Scene Light:");
                 ui.add_space(spacing);
-                
+
                 ui.checkbox(scene_light_enabled, "Enable Scene Light")
                     .on_hover_text("Adds a directional light that follows the editor camera's forward direction. Useful for viewing scenes without lights.");
             });
-            
+
             ui.add_space(spacing);
         });
     });

@@ -71,7 +71,6 @@ pub fn serialize_entities(world_state: WorldState, path: Option<String>) {
             .iter()
             .map(|(entity, identity, transform, parent, save_as)| {
                 let parent_uuid = parent.and_then(|p| entity_uuid_map.get(&p.index()).copied());
-                
                 match save_as {
                     SaveSettings::Runtime => {
                         // Use current world state
@@ -85,7 +84,7 @@ pub fn serialize_entities(world_state: WorldState, path: Option<String>) {
                                 rotation,
                                 scale,
                             },
-                            parent: parent_uuid, 
+                            parent: parent_uuid,
                             components: runtime_data_provider.get(entity).cloned(),
                         }
                     },
@@ -142,7 +141,7 @@ pub fn serialize_entities(world_state: WorldState, path: Option<String>) {
                                         rotation,
                                         scale,
                                     },
-                                    parent: parent_uuid, 
+                                    parent: parent_uuid,
                                     components: runtime_data_provider.get(entity).cloned(),
                                 }
                             })

@@ -3,7 +3,6 @@
 /// These tests cover path normalization logic that is independent of Bevy's runtime.
 /// Note: The actual file.rs functions depend on Bevy's FileAssetReader, so we test
 /// the normalization logic separately.
-
 // Test path normalization logic that is used in file.rs
 fn normalize_path_separators(path: &str) -> String {
     path.replace('\\', "/")
