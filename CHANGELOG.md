@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CI workflow with CHANGELOG.md validation on PRs (macos-latest)
+- Release workflow for macOS ARM builds (triggered by GitHub release published, mohit-meshflow only)
+- Local build script (scripts/build-release.sh)
+- Clippy and format checks in CI
+
 ### Changed
 
 ### Deprecated
@@ -16,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+
+- Fixed test_save_preserve_disk_transform integration test
 
 ### Security
 
