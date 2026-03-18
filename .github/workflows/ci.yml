@@ -49,11 +49,9 @@ jobs:
       - name: Cache cargo registry and build
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          prefix-key: ${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+          shared-key: format
+          cache-workspace-crates: true
+          add-job-id-key: "false"
 
       - name: Run format check
         run: cargo fmt --all -- --check
@@ -71,11 +69,9 @@ jobs:
       - name: Cache cargo registry and build
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          prefix-key: ${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+          shared-key: clippy
+          cache-workspace-crates: true
+          add-job-id-key: "false"
 
       - name: Run clippy
         run: cargo clippy --workspace --all-targets
@@ -93,11 +89,9 @@ jobs:
       - name: Cache cargo registry and build
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          prefix-key: ${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+          shared-key: test
+          cache-workspace-crates: true
+          add-job-id-key: "false"
 
       - name: Run doctests
         run: cargo test --workspace --doc
@@ -115,11 +109,9 @@ jobs:
       - name: Cache cargo registry and build
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          prefix-key: ${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-            ${{ runner.os }}-
+          shared-key: test
+          cache-workspace-crates: true
+          add-job-id-key: "false"
 
       - name: Run tests
         run: cargo test --workspace --all-targets
