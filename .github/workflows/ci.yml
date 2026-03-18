@@ -10,8 +10,40 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  changelog:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if CHANGELOG.md was modified
+        id: check
+        run: |
+          changed=$(git diff --name-only origin/main HEAD | grep -c CHANGELOG.md || true)
+          if [ "$changed" -gt 0 ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bypass if PR has skip-changelog label
+        if: contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        run: echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Fail if CHANGELOG.md was not modified
+        if: steps.check.outputs.changed == 'false'
+        run: |
+          echo "::error::CHANGELOG.md must be modified in this PR."
+          exit 1
+
+  test:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    needs: [changelog]
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
