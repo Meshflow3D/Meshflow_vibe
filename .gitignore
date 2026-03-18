@@ -60,6 +60,7 @@ Thumbs.db
 
 
 # Build results
+/build/
 /debug/
 /release/
 /assets/config

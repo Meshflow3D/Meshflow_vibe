@@ -21,10 +21,14 @@ jobs:
 
       - name: Build release binary
         run: |
-          cargo build --release --example dungeon
+          cargo build --release --example cube_demo
 
-      - name: Create GitHub Release
+      - name: Build DMG
+        run: |
+          chmod +x scripts/build-release.sh
+          bash scripts/build-release.sh
+
+      - name: Upload DMG to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: assets/scenes/cube.scene
-          generate_release_notes: false
+          files: build/meshflow-vibe-*.dmg

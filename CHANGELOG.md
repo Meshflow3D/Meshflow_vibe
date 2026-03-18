@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Automated DMG release workflow: now packages the cube demo (cube, light, camera) instead of the dungeon example
 - Fixed test_save_preserve_disk_transform integration test
 
 ### Security
