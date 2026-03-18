@@ -19,12 +19,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build release binary
+      - name: Build DMG
         run: |
-          cargo build --release --example dungeon
+          chmod +x scripts/build-release.sh
+          bash scripts/build-release.sh
 
-      - name: Create GitHub Release
+      - name: Upload DMG to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: assets/scenes/cube.scene
-          generate_release_notes: false
+          files: build/meshflow-vibe-*.dmg

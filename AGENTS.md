@@ -74,6 +74,10 @@ cargo run --release --example dungeon
 
 - `AGENTS.md` (2026-03-18) - AI agent context file with project overview, workspace structure, commands, and architecture notes
 
+## Recent Changes
+
+- **2026-03-18**: Automated DMG release workflow updated to package cube demo (cube, light, camera) instead of dungeon example; release target changed from dungeon to cube demo
+
 ## Verification
 
 Run verification commands on completion:
