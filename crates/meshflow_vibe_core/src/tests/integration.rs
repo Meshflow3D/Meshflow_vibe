@@ -219,7 +219,7 @@ SceneData(
     entities: [
         EntitySaveReadyData(
             identity: IdentityData(
-                uuid: 00000000-0000-0000-0000-000000000001,
+                uuid: "00000000-0000-0000-0000-000000000001",
                 name: "Test",
                 class: Empty,
             ),
