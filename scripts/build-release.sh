@@ -2,10 +2,11 @@
 set -e
 
 APP_NAME="Meshflow Vibe"
-VERSION="0.3.1"
 BUILD_DIR="build"
+PROJECT_ROOT="$(dirname "$0")/.."
+VERSION=$(grep -m1 '^version = ' "$PROJECT_ROOT/Cargo.toml" | sed 's/version = "\([^"]*\)"/\1/')
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
-DMG_NAME="meshflow-vibe-$VERSION-macos.dmg"
+DMG_NAME="meshflow-vibe-${VERSION}-macos.dmg"
 DMG_PATH="$BUILD_DIR/$DMG_NAME"
 
 echo "=== Building Meshflow Vibe Release ==="
@@ -33,7 +34,7 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 # Create Info.plist
-cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
+cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -47,9 +48,9 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.3.1</string>
+    <string>$VERSION</string>
     <key>CFBundleVersion</key>
-    <string>0.3.1</string>
+    <string>$VERSION</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>
@@ -73,6 +74,7 @@ echo "Creating DMG: $DMG_PATH"
 hdiutil create -volname "$APP_NAME" \
     -srcfolder "$APP_BUNDLE" \
     -format UDZO \
+    -ov \
     -o "$DMG_PATH" \
     -size 500m
 

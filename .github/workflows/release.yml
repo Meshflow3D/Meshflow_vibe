@@ -19,10 +19,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build release binary
-        run: |
-          cargo build --release --example cube_demo
-
       - name: Build DMG
         run: |
           chmod +x scripts/build-release.sh
