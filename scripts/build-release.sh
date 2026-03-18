@@ -50,8 +50,8 @@ mkdir -p "$BUILD_DIR"
 echo "Building release binary..."
 cargo build --release --example cube_demo
 
-# Find the built binary
-BINARY_PATH=$(find target/release/examples -name "cube_demo" -type f | head -n 1)
+# Find the built binary (exclude .dSYM bundles which contain DWARF debug info)
+BINARY_PATH=$(find target/release/examples -name "cube_demo" -type f -not -path "*/.dSYM/*" | head -n 1)
 if [ -z "$BINARY_PATH" ]; then
     echo "ERROR: Could not find cube_demo binary"
     exit 1
