@@ -29,3 +29,6 @@ jobs:
 
       - name: Run tests
         run: cargo test --workspace --all-targets
+
+      - name: Run doctests
+        run: cargo test --workspace --doc

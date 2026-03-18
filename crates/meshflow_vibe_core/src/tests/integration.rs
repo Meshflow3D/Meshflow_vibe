@@ -15,7 +15,7 @@ use tempfile::tempdir;
 /// 2. Adds an entity with IdentityData and SpawnSource
 /// 3. Sends a RequestSaveEvent
 /// 4. Drives through app.update()
-/// 5. Asserts that a file is created at the expected path
+/// 5. Asserts that pending_saves is populated (does NOT check file creation - that's test_save_workflow_full)
 #[test]
 fn test_save_workflow_headless() {
     let temp_dir = tempdir().expect("Failed to create temp directory");
