@@ -119,7 +119,9 @@ pub fn ui_callable_events(_attr: TokenStream, item: TokenStream) -> TokenStream 
     let event_senders = field_types.iter().map(|field_type| {
         quote! {
             Box::new(|world: &mut bevy::prelude::World| {
-                world.resource_mut::<bevy::ecs::event::Events<#field_type>>().send(#field_type::default());
+                if let Some(mut events) = world.get_resource_mut::<bevy::ecs::event::Events<#field_type>>() {
+                    events.send(#field_type::default());
+                }
             }) as Box<dyn Fn(&mut bevy::prelude::World) + Send + Sync>
         }
     });

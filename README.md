@@ -22,8 +22,8 @@ Navigate to your projects Cargo.toml and add `meshflow_vibe`.
 
 ```rust
 [dependencies]
-bevy = "0.16.0"
-meshflow_vibe = { path = "." }
+bevy = "0.18.1"
+meshflow_vibe = { git = "https://github.com/Meshflow3D/Meshflow_vibe", branch = "main" }
 serde = "*"
 ```
 
@@ -53,7 +53,10 @@ Next, check out the [examples](https://github.com/BlakeDarrow/meshflow-vibe/tree
 
 | bevy | meshflow_vibe       |
 | ---- | --------------------|
-| 0.16 | 0.3.1               |
+| 0.18 | 0.3.1               |
+| 0.17 | 0.3.0               |
+| 0.16 | 0.2.0 - 0.2.2       |
+| 0.14 | 0.1.0               |
 
 
 # Features 
