@@ -3,13 +3,44 @@ set -e
 
 APP_NAME="Meshflow Vibe"
 BUILD_DIR="build"
-PROJECT_ROOT="$(dirname "$0")/.."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Validate we're at repository root (check for .git directory and Cargo.toml)
+if [ ! -d "$PROJECT_ROOT/.git" ]; then
+    echo "ERROR: Not at repository root (no .git directory found)"
+    echo "Current directory: $(pwd)"
+    echo "Expected root: $PROJECT_ROOT"
+    exit 1
+fi
+
+if [ ! -f "$PROJECT_ROOT/Cargo.toml" ]; then
+    echo "ERROR: Cargo.toml not found at $PROJECT_ROOT"
+    exit 1
+fi
+
+# Extract and validate version from Cargo.toml with fail-fast semantics
 VERSION=$(grep -m1 '^version = ' "$PROJECT_ROOT/Cargo.toml" | sed 's/version = "\([^"]*\)"/\1/')
+if [ -z "$VERSION" ]; then
+    echo "ERROR: Failed to extract version from Cargo.toml"
+    echo "Expected format: version = \"X.Y.Z\""
+    exit 1
+fi
+
+# Validate version format (basic semantic versioning check)
+if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+    echo "ERROR: Invalid version format: $VERSION"
+    echo "Expected semantic versioning format: X.Y.Z"
+    exit 1
+fi
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 DMG_NAME="meshflow-vibe-${VERSION}-macos.dmg"
 DMG_PATH="$BUILD_DIR/$DMG_NAME"
 
 echo "=== Building Meshflow Vibe Release ==="
+
+# Change to repository root for all relative operations
+cd "$PROJECT_ROOT"
 
 # Clean build directory
 rm -rf "$BUILD_DIR"
@@ -65,8 +96,6 @@ chmod +x "$APP_BUNDLE/Contents/MacOS/cube_demo"
 
 # Copy assets directory to .app bundle (Bevy reads from base_path + "assets", resolves relative to Contents/MacOS/)
 echo "Copying assets to .app bundle..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/MacOS/"
 
 # Create DMG using hdiutil (built-in macOS tool)
