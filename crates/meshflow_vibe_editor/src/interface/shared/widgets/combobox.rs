@@ -1,10 +1,10 @@
 use bevy_egui::egui::{self, Popup};
-use bevy_granite_core::{AvailableEditableMaterials, EditableMaterial, ReflectedComponent};
-use bevy_granite_logging::{
+use egui::{Align2, Rect, Response, Shape, Stroke, Ui, Vec2};
+use meshflow_vibe_core::{AvailableEditableMaterials, EditableMaterial, ReflectedComponent};
+use meshflow_vibe_logging::{
     config::{LogCategory, LogLevel, LogType},
     log,
 };
-use egui::{Align2, Rect, Response, Shape, Stroke, Ui, Vec2};
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
@@ -99,7 +99,6 @@ fn generic_selector_popup<T: SelectableItem>(
     let mut popup_changed = false;
 
     if Popup::is_id_open(ui.ctx(), popup_id) {
-        ui.memory_mut(|mem| mem.keep_popup_open(popup_id));
         let popup_pos = button_response.rect.left_bottom() + egui::vec2(0.0, 4.0);
 
         let area_response = egui::Area::new(popup_id)
@@ -291,7 +290,7 @@ fn combobox_style_button(ui: &mut Ui, button_text: &str) -> Response {
                 .unwrap_or_else(|| ui.visuals().text_color())
         };
 
-        let text_galley = ui.fonts(|f| {
+        let text_galley = ui.ctx().fonts_mut(|f| {
             f.layout_no_wrap(
                 button_text.to_string(),
                 egui::TextStyle::Button.resolve(ui.style()),

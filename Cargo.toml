@@ -3,10 +3,10 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
-bevy = { version = "0.17.2", default-features = false }
-bevy-inspector-egui = "0.34.0"
-bevy_obj = "0.17.0"
-bevy_egui = "0.37.0"
+bevy = { version = "0.18.1", default-features = false }
+bevy-inspector-egui = "0.36.0"
+bevy_obj = "0.18.0"
+bevy_egui = "0.39.0"
 toml = "0.8.22"
 uuid = "1.17.0"
 serde = "1.0"
@@ -15,27 +15,27 @@ ron = "0.8.1"
 lazy_static = "1.5.0"
 
 [package]
-name = "bevy_granite"
+name = "meshflow_vibe"
 version = "0.3.1"
 edition = "2021"
 description = "A 3d editor for the Bevy game engine."
 
 [features]
 default = ["core", "editor", "gizmos"]
-core = ["bevy_granite_core", "bevy_granite_logging", "bevy_granite_macros"]
-editor = ["core", "gizmos", "bevy_granite_editor"]
-gizmos = ["core", "bevy_granite_gizmos"]
+core = ["meshflow_vibe_core", "meshflow_vibe_logging", "meshflow_vibe_macros"]
+editor = ["core", "gizmos", "meshflow_vibe_editor"]
+gizmos = ["core", "meshflow_vibe_gizmos"]
 
 [dependencies]
 bevy = { workspace = true }
 bevy-inspector-egui = { workspace = true }
 bevy_obj = { workspace = true }
 
-bevy_granite_core = { path = "crates/bevy_granite_core", optional = true }
-bevy_granite_editor = { path = "crates/bevy_granite_editor", optional = true }
-bevy_granite_gizmos = { path = "crates/bevy_granite_gizmos", optional = true }
-bevy_granite_logging = { path = "crates/bevy_granite_logging", optional = true }
-bevy_granite_macros = { path = "crates/bevy_granite_macros", optional = true }
+meshflow_vibe_core = { path = "crates/meshflow_vibe_core", optional = true }
+meshflow_vibe_editor = { path = "crates/meshflow_vibe_editor", optional = true }
+meshflow_vibe_gizmos = { path = "crates/meshflow_vibe_gizmos", optional = true }
+meshflow_vibe_logging = { path = "crates/meshflow_vibe_logging", optional = true }
+meshflow_vibe_macros = { path = "crates/meshflow_vibe_macros", optional = true }
 
 [dev-dependencies]
 serde = "*"

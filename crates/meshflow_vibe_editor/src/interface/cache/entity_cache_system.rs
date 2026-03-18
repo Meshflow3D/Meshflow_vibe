@@ -7,8 +7,8 @@ use bevy::{
     prelude::{Entity, Name, Transform, World},
     transform::components::GlobalTransform,
 };
-use bevy_granite_core::{entities::Unknown, ComponentEditor, IdentityData, TransformData};
-use bevy_granite_gizmos::{ActiveSelection, DragState};
+use meshflow_vibe_core::{entities::Unknown, ComponentEditor, IdentityData, TransformData};
+use meshflow_vibe_gizmos::{ActiveSelection, DragState};
 
 pub type EntityCacheQueryItem<'a> = (
     Entity,
@@ -62,7 +62,7 @@ pub fn update_entity_cache_system(world: &mut World) {
                     .map(|n| n.to_string())
                     .unwrap_or(format!("Entity {entity:?}")),
                 uuid: uuid::Uuid::new_v4(),
-                class: bevy_granite_core::GraniteTypes::Unknown(Unknown::default()),
+                class: meshflow_vibe_core::GraniteTypes::Unknown(Unknown::default()),
             }
         };
 

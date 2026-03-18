@@ -9,15 +9,15 @@ impl OBJ {
         let large_spacing = spacing.1;
         let spacing_val = spacing.0;
         let small_spacing = spacing_val / 2.0;
-        
+
         ui.label(egui::RichText::new(self.type_name()).italics());
         ui.add_space(large_spacing);
-        
+
         // Path editing
         let mut changed = false;
         ui.label("OBJ Path:");
         ui.add_space(spacing_val);
-        
+
         ui.horizontal(|ui| {
             ui.set_max_width(ui.available_width() - large_spacing * 3.);
 
@@ -58,14 +58,14 @@ impl OBJ {
 
             ui.add_space(small_spacing);
         });
-        
+
         ui.add_space(large_spacing);
-        
+
         let reload_clicked = ui.button("Reload OBJ").clicked();
         if reload_clicked {
             self.reload_requested = true;
         }
-        
+
         reload_clicked || changed
     }
 }

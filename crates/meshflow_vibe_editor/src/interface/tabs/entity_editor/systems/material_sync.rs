@@ -3,8 +3,8 @@ use bevy::{
     ecs::{entity::Entity, message::MessageReader, system::Query},
     prelude::ResMut,
 };
-use bevy_granite_core::{entities::GraniteType, AvailableEditableMaterials, IdentityData};
-use bevy_granite_logging::{
+use meshflow_vibe_core::{entities::GraniteType, AvailableEditableMaterials, IdentityData};
+use meshflow_vibe_logging::{
     config::{LogCategory, LogLevel, LogType},
     log,
 };
