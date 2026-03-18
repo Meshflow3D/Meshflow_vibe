@@ -5,7 +5,6 @@ use crate::{
     },
     world::{save_data_ready_system, save_request_system, SaveWorldRequestData},
 };
-use bevy::ecs::message::message_update_system;
 use bevy::prelude::*;
 use std::fs;
 use tempfile::tempdir;
@@ -42,15 +41,8 @@ fn test_save_workflow_headless() {
     app.insert_resource(ComponentEditor::default())
         .insert_resource(SaveWorldRequestData::default());
 
-    // Add the save systems and message update system
-    app.add_systems(
-        Update,
-        (
-            message_update_system,
-            save_request_system,
-            save_data_ready_system,
-        ),
-    );
+    // Add the save systems (message_update_system is already scheduled by add_message)
+    app.add_systems(Update, (save_request_system, save_data_ready_system));
 
     // Add an entity with required components
     let _entity = app
@@ -120,9 +112,8 @@ fn test_save_workflow_full() {
     app.insert_resource(ComponentEditor::default())
         .insert_resource(SaveWorldRequestData::default());
 
-    // Add message update system and save systems
-    app.add_systems(Update, message_update_system)
-        .add_systems(Update, (save_request_system, save_data_ready_system));
+    // Add save systems (message_update_system is already scheduled by add_message)
+    app.add_systems(Update, (save_request_system, save_data_ready_system));
 
     // Add entity
     let test_uuid = uuid::Uuid::new_v4();
@@ -258,8 +249,8 @@ SceneData(
     app.insert_resource(ComponentEditor::default())
         .insert_resource(SaveWorldRequestData::default());
 
-    app.add_systems(Update, message_update_system)
-        .add_systems(Update, (save_request_system, save_data_ready_system));
+    // Add save systems (message_update_system is already scheduled by add_message)
+    app.add_systems(Update, (save_request_system, save_data_ready_system));
 
     // Create entity with PreserveDiskTransform setting
     let _entity = app
@@ -341,8 +332,8 @@ fn test_save_filters_by_spawn_source() {
     app.insert_resource(ComponentEditor::default())
         .insert_resource(SaveWorldRequestData::default());
 
-    app.add_systems(Update, message_update_system)
-        .add_systems(Update, (save_request_system, save_data_ready_system));
+    // Add save systems (message_update_system is already scheduled by add_message)
+    app.add_systems(Update, (save_request_system, save_data_ready_system));
 
     // Create two entities with different spawn sources
     let _entity1 = app

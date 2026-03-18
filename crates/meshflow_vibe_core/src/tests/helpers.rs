@@ -96,14 +96,14 @@ pub fn add_test_plugin<P: Plugin>(app: &mut App, plugin: P) {
 ///
 /// ```rust
 /// let mut app = headless_app!();
-/// app.add_systems(bevy::app::Update, test_system!(|world: bevy::ecs::world::World| {
+/// app.add_systems(bevy::app::Update, test_system!(|world| {
 ///     // test code here
 /// }));
 /// ```
 #[macro_export]
 macro_rules! test_system {
     ($body:expr) => {
-        |mut world: bevy::ecs::world::World| $body(world)
+        |mut world: bevy::ecs::world::World| $body(&mut world)
     };
 }
 
