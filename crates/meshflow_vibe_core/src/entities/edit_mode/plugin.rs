@@ -3,12 +3,12 @@
 use bevy::{
     app::{App, Plugin, Update},
     ecs::message::MessageReader,
-    prelude::{Commands, Entity, IntoScheduleConfigs, Query, Res, ResMut, With, Without},
+    prelude::{Commands, Entity, IntoScheduleConfigs, Query, Res, ResMut, With},
 };
 
 use super::{
     EditSession, EnterEditMode, ExitEditMode, InEditMode, ModeSelectionState, OnEnterEditMode,
-    OnExitEditMode, SubSelectionMode, SwitchSubSelectionMode,
+    OnExitEditMode, OnSubSelectionModeSwitched, SubSelectionMode, SwitchSubSelectionMode,
 };
 use crate::entities::{EditableTopologyRegistry, TopologyOwner};
 
@@ -36,6 +36,7 @@ impl Plugin for EditModePlugin {
             .add_message::<OnEnterEditMode>()
             .add_message::<OnExitEditMode>()
             .add_message::<SwitchSubSelectionMode>()
+            .add_message::<OnSubSelectionModeSwitched>()
             //
             // Schedule systems
             //
@@ -64,6 +65,7 @@ impl Plugin for EditModePlugin {
 /// - Topology must exist in `EditableTopologyRegistry`
 ///
 /// If eligible, adds `InEditMode` marker component to trigger cleanup callbacks.
+/// If a session is already active, exits it properly first.
 fn handle_enter_edit_mode(
     mut commands: Commands,
     mut edit_session: ResMut<EditSession>,
@@ -71,9 +73,20 @@ fn handle_enter_edit_mode(
     owner_query: Query<&TopologyOwner>,
     mut enter_events: MessageReader<EnterEditMode>,
     mut on_enter: bevy::ecs::message::MessageWriter<OnEnterEditMode>,
+    mut on_exit: bevy::ecs::message::MessageWriter<OnExitEditMode>,
 ) {
     for event in enter_events.read() {
         let entity = event.entity;
+
+        // Check if a session is already active
+        if edit_session.is_active() {
+            if let Some(active_entity) = edit_session.active_entity() {
+                on_exit.write(OnExitEditMode(active_entity));
+                commands.entity(active_entity).remove::<InEditMode>();
+            }
+            edit_session.exit();
+        }
+
         // Check eligibility
         let Ok(owner) = owner_query.get(entity) else {
             continue; // Entity doesn't have TopologyOwner
@@ -155,8 +168,8 @@ fn handle_sub_selection_mode_switch(
 /// - Ensures mode-specific resources are properly released
 fn handle_sub_selection_mode_cleanup(
     mut commands: Commands,
-    mut query: Query<(Entity, &ModeSelectionState), With<InEditMode>>,
-    mut sub_selection: ResMut<SubSelectionMode>,
+    query: Query<(Entity, &ModeSelectionState), With<InEditMode>>,
+    _sub_selection: ResMut<SubSelectionMode>,
     mut switch_events: bevy::ecs::message::MessageReader<SwitchSubSelectionMode>,
 ) {
     for event in switch_events.read() {
@@ -176,12 +189,14 @@ fn handle_sub_selection_mode_cleanup(
 /// is cleared to prevent stale state.
 fn cleanup_stale_edit_session(
     mut edit_session: ResMut<EditSession>,
+    mut on_exit: bevy::ecs::message::MessageWriter<OnExitEditMode>,
     active_query: Query<(), With<InEditMode>>,
 ) {
     // Try to get the active entity and check if it still has InEditMode
     if let Some(active_entity) = edit_session.active_entity() {
         // If we can't get a component from the active entity, it's despawned
         if active_query.get(active_entity).is_err() {
+            on_exit.write(OnExitEditMode(active_entity));
             edit_session.exit();
         }
     }

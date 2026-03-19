@@ -16,7 +16,7 @@ use crate::{
     viewport::ViewportCameraState,
     UI_CONFIG,
 };
-use bevy::ecs::system::SystemParam;
+
 use bevy::{
     ecs::{entity::Entity, system::Commands},
     prelude::{Query, ResMut, With},
@@ -31,6 +31,7 @@ use meshflow_vibe_gizmos::selection::events::EntityEvents;
 use meshflow_vibe_gizmos::selection::ActiveSelection;
 use native_dialog::FileDialog;
 
+#[allow(clippy::too_many_arguments)]
 pub fn top_bar_ui(
     side_dock: &mut ResMut<SideDockState>,
     bottom_dock: &mut ResMut<BottomDockState>,
@@ -121,7 +122,7 @@ pub fn top_bar_ui(
                         let sources: Vec<String> =
                             editor_state.loaded_sources.iter().cloned().collect();
                         for source in sources {
-                            if ui.button(format!("{}", source)).clicked() {
+                            if ui.button(source.to_string()).clicked() {
                                 events
                                     .despawn_by_source
                                     .write(RequestDespawnBySource(source));
@@ -184,7 +185,7 @@ pub fn top_bar_ui(
             });
 
             ui.menu_button("Panels", |ui| {
-                for (tab_type, label) in vec![
+                for (tab_type, label) in [
                     (SideTabType::EntityEditor, "Entity Editor"),
                     (SideTabType::NodeTree, "Entities"),
                     (SideTabType::EditorSettings, "Editor Settings"),
@@ -210,7 +211,7 @@ pub fn top_bar_ui(
 
                 ui.separator();
 
-                for (tab_type, label) in vec![
+                for (tab_type, label) in [
                     (BottomTabType::Log, "Log"),
                     (BottomTabType::Debug, "Debug"),
                     (BottomTabType::Events, "Events"),
@@ -298,7 +299,7 @@ pub fn top_bar_ui(
             });
 
             ui.separator();
-            if edit_session.is_active() && ui.button("Frame Active (F) ").clicked() {
+            if !edit_session.is_active() && ui.button("Frame Active (F) ").clicked() {
                 events.frame.write(RequestCameraEntityFrame);
             }
             ui.separator();
@@ -306,19 +307,19 @@ pub fn top_bar_ui(
                 commands.trigger(EntityEvents::DeselectAll);
             }
             ui.separator();
-            if !edit_session.is_active() && ui.button("Enter Edit Mode (M) ").clicked() {
-                for (entity, topology_owner) in active_selection_with_topology.iter() {
+            if !edit_session.is_active() && ui.button("Enter Edit Mode").clicked() {
+                if let Some((entity, topology_owner)) = active_selection_with_topology.iter().next()
+                {
                     events.enter_edit_mode.write(
                         meshflow_vibe_core::entities::edit_mode::EnterEditMode {
                             entity,
                             topology_id: topology_owner.topology_id,
                         },
                     );
-                    break;
                 }
             }
             ui.separator();
-            if edit_session.is_active() && ui.button("Exit Edit Mode (M) ").clicked() {
+            if edit_session.is_active() && ui.button("Exit Edit Mode").clicked() {
                 events
                     .exit_edit_mode
                     .write(meshflow_vibe_core::entities::edit_mode::ExitEditMode);
