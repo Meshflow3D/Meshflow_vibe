@@ -3,7 +3,8 @@ use bevy::{
     prelude::{Children, Commands, Entity, Query, Res},
 };
 use meshflow_vibe_core::{
-    entities::SaveSettings, RequestLoadEvent, RequestReloadEvent, RequestSaveEvent, UserInput,
+    entities::edit_mode::EditSession, entities::SaveSettings, RequestLoadEvent, RequestReloadEvent,
+    RequestSaveEvent, UserInput,
 };
 use meshflow_vibe_gizmos::{selection::events::EntityEvents, Selected};
 use meshflow_vibe_logging::{log, LogCategory, LogLevel, LogType};
@@ -27,13 +28,22 @@ pub fn shortcuts_system(
     query: Query<(Entity, &Selected, Option<&Children>)>,
     mut events: EditorEvents,
     editor_state: Res<EditorState>,
+    edit_session: Res<EditSession>,
 ) {
-    handle_shortcuts(&input, &editor_state, &mut commands, &query, &mut events);
+    handle_shortcuts(
+        &input,
+        &editor_state,
+        &edit_session,
+        &mut commands,
+        &query,
+        &mut events,
+    );
 }
 
 fn handle_shortcuts(
     input: &UserInput,
     editor_state: &EditorState,
+    edit_session: &EditSession,
     commands: &mut Commands,
     query: &Query<(Entity, &Selected, Option<&Children>)>,
     events: &mut EditorEvents,
@@ -86,8 +96,8 @@ fn handle_shortcuts(
     }
 
     // F key
-    // Frame selected entity
-    if input.key_f.just_pressed && !input.mouse_over_egui {
+    // Frame selected entity (only when NOT in edit mode)
+    if input.key_f.just_pressed && !input.mouse_over_egui && !edit_session.is_active() {
         log!(
             LogType::Editor,
             LogLevel::Info,
@@ -246,5 +256,33 @@ fn handle_shortcuts(
             popup: PopupType::AddRelationship,
             mouse_pos: input.mouse_pos,
         });
+    }
+
+    // V/E/F keys for sub-selection mode switching
+    if !input.mouse_over_egui && !input.mouse_right.any && edit_session.is_active() {
+        let key_char = if input.key_v.just_pressed {
+            Some('v')
+        } else if input.key_e.just_pressed {
+            Some('e')
+        } else if input.key_f.just_pressed {
+            Some('f')
+        } else {
+            None
+        };
+
+        if let Some(mode) =
+            key_char.and_then(meshflow_vibe_core::entities::edit_mode::Mode::from_char)
+        {
+            log!(
+                LogType::Editor,
+                LogLevel::Info,
+                LogCategory::Input,
+                "(shortcut) Switching sub-selection mode to: {}",
+                mode.display_name()
+            );
+            events
+                .switch_mode
+                .write(meshflow_vibe_core::entities::edit_mode::SwitchSubSelectionMode { mode });
+        }
     }
 }

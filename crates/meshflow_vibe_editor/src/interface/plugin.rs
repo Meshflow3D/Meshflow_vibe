@@ -16,9 +16,11 @@ use super::{
         update_entity_with_new_transform_system, update_log_tab_system,
         update_material_handle_system, update_node_tree_tabs_system, RequestReparentEntityEvent,
     },
-    BottomDockState, EntityUIDataCache, PopupState, SideDockState,
+    BottomDockState, EntityUIDataCache, PopupState, RequestEnterEditMode, RequestExitEditMode,
+    SideDockState,
 };
 use crate::{interface::RequestRemoveParentsFromEntities, setup::is_editor_active};
+use bevy::ecs::message::MessageReader;
 use bevy::{
     app::Update,
     ecs::schedule::IntoScheduleConfigs,
@@ -51,6 +53,20 @@ impl Plugin for InterfacePlugin {
             // need to rework
             .add_message::<RequestReparentEntityEvent>()
             .add_message::<RequestRemoveParentsFromEntities>()
+            // Edit mode events
+            .add_message::<RequestEnterEditMode>()
+            .add_message::<RequestExitEditMode>()
+            //
+            // Conversion systems for RequestEnterEditMode -> EnterEditMode
+            //
+            .add_systems(
+                Update,
+                convert_request_enter_edit_mode.run_if(is_editor_active),
+            )
+            .add_systems(
+                Update,
+                convert_request_exit_edit_mode.run_if(is_editor_active),
+            )
             //
             // Register types
             // If you want to duplicate bevy data you must register the type
@@ -104,5 +120,30 @@ impl Plugin for InterfacePlugin {
                 (show_active_popups_system, dock_ui_system).run_if(is_editor_active),
             )
             .add_systems(Update, send_queued_events_system.run_if(is_editor_active));
+    }
+}
+
+fn convert_request_enter_edit_mode(
+    mut editor_events: crate::interface::events::EditorEvents,
+    mut request_events: MessageReader<RequestEnterEditMode>,
+) {
+    for event in request_events.read() {
+        editor_events.enter_edit_mode.write(
+            meshflow_vibe_core::entities::edit_mode::EnterEditMode {
+                entity: event.entity,
+                topology_id: event.topology_id,
+            },
+        );
+    }
+}
+
+fn convert_request_exit_edit_mode(
+    mut editor_events: crate::interface::events::EditorEvents,
+    mut request_events: MessageReader<RequestExitEditMode>,
+) {
+    for _event in request_events.read() {
+        editor_events
+            .exit_edit_mode
+            .write(meshflow_vibe_core::entities::edit_mode::ExitEditMode);
     }
 }

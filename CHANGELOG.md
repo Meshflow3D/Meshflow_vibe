@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Wave 1: Edit mode session state foundation - `EditSession` resource, `InEditMode` marker, `EnterEditMode`/`ExitEditMode` messages, `OnEnterEditMode`/`OnExitEditMode` observer events, mode eligibility checks
 - Editable topology ownership contract: `TopologyId`, `TopologyOwner`, `EditableTopologyRegistry`
 - CI workflow with CHANGELOG.md validation on PRs (macos-latest)
 - Release workflow for macOS ARM builds (triggered by GitHub release published, mohit-meshflow only)
@@ -28,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Edit mode plugin: Fixed Bevy 0.18 Message API compatibility (Event→Message types, .add_message(), MessageWriter::write(), removed duplicate registration)
+- Edit mode tests: Fixed Entity creation for Bevy 0.18 (Entity::from_bits() instead of deprecated Entity::from_raw())
 - Automated DMG release workflow: now packages the cube demo (cube, light, camera) instead of the dungeon example
 - Fixed test_save_preserve_disk_transform integration test
 

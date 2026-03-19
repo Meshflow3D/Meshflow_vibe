@@ -17,11 +17,13 @@ use uuid::Uuid;
 
 pub mod component_editor;
 pub mod deserialize;
+pub mod edit_mode;
 pub mod editable;
 pub mod generate_tangents;
 pub mod lifecycle;
 pub mod plugin;
 pub mod serialize;
+pub use edit_mode::*;
 pub use editable::*;
 
 /// Main camera
@@ -269,7 +271,7 @@ impl Default for TopologyId {
 /// 2. The topology is stored in this resource with a unique ID
 /// 3. Edit operations query this resource to get/modify topology
 /// 4. Render meshes can be derived from or synchronized with topology data
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Clone, Debug, Default)]
 pub struct EditableTopologyRegistry {
     next_id: u64,
     topologies: HashMap<TopologyId, EditableTopology>,
