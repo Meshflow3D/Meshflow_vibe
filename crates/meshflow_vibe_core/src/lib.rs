@@ -45,7 +45,8 @@ pub use entities::{
 pub use meshflow_vibe_macros::register_editor_components;
 pub use topology::{
     ids::{EdgeId, FaceId, LoopId, VertId},
-    Edge, EditableTopology, Face, Loop, TopologyValidationError, Vert,
+    Edge, EditableTopology, Face, Loop, MeshExportError, MeshExporter, TopologyValidationError,
+    Vert,
 };
 
 // Marker trait for UI callable events
