@@ -116,8 +116,8 @@ jobs:
               grep "Developer ID Application" | head -1)
           fi
           
-          # Try to get a working certificate identifier
-          CERT_IDENTIFIER=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | grep -E "^[[:space:]]*[0-9A-F]{40}" | head -1 | awk '{print $2}')
+          # Try to get a working certificate identifier (handle numbered output like "  1) ABC123...")
+          CERT_IDENTIFIER=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 | sed -E 's/^[[:space:]]*[0-9]+\)[[:space:]]*([0-9A-F]{40}).*/\1/')
           
           if [ -n "$CERT_IDENTIFIER" ]; then
             echo "Using certificate: $CERT_IDENTIFIER"
@@ -180,7 +180,7 @@ jobs:
             --team-id "$TEAM_ID" \
             --api-key "$API_KEY" \
             --api-issuer "$API_ISSUER" \
-            --wait 2>&1 | grep -E "^id:" | head -1 | sed 's/^id:[[:space:]]*//')
+            --wait 2>&1 | grep -E "^[[:space:]]*id:" | head -1 | sed 's/^[[:space:]]*id:[[:space:]]*//')
           
           if [ -z "$SUBMISSION_ID" ]; then
             echo "::error::Could not extract submission ID from notarization output"
