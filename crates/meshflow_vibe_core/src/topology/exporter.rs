@@ -1,4 +1,4 @@
-use super::{EditableTopology, FaceId, LoopId, TopologyValidationError};
+use super::{EditableTopology, FaceId, TopologyValidationError};
 use bevy::mesh::{Indices, Mesh};
 use bevy::prelude::Vec3;
 use bevy::render::render_resource::PrimitiveTopology;
@@ -317,5 +317,48 @@ mod tests {
         );
 
         assert_eq!(original.primitive_topology(), exported.primitive_topology());
+    }
+
+    #[test]
+    fn test_roundtrip_unsupported_non_manifold() {
+        use bevy::prelude::Cuboid;
+
+        let original = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
+
+        let importer = super::super::MeshImporter::new();
+        let mut topology = importer.import_mesh(&original).unwrap();
+
+        let v3_id = topology.generate_vert_id();
+        topology.insert_vertex(Vert::new(v3_id, Vec3::new(2.0, 0.0, 0.0)));
+
+        let e3_id = topology.generate_edge_id();
+        topology.insert_edge(Edge::new(e3_id));
+
+        let face2_id = topology.generate_face_id();
+
+        let l3_id = topology.generate_loop_id();
+        let l4_id = topology.generate_loop_id();
+        let l5_id = topology.generate_loop_id();
+
+        let loop3 = Loop::new(l3_id, face2_id, e3_id, v3_id, 0);
+        let loop4 = Loop::new(l4_id, face2_id, e3_id, v3_id, 1);
+        let loop5 = Loop::new(l5_id, face2_id, e3_id, v3_id, 2);
+
+        topology.loops.insert(l3_id, loop3);
+        topology.loops.insert(l4_id, loop4);
+        topology.loops.insert(l5_id, loop5);
+
+        let mut face2 = Face::new(face2_id);
+        face2.loops = vec![l3_id, l4_id, l5_id];
+        topology.insert_face(face2);
+
+        let exporter = MeshExporter::new();
+        let result = exporter.export_mesh(&topology);
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            MeshExportError::NonManifoldEdge { .. }
+        ));
     }
 }

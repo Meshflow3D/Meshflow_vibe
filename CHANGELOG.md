@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gatekeeper-compatible release flow with Developer ID signing and notarization
 - Automated notarization ticket stapling for offline validation
 - Explicit credential validation before release upload
+- Mesh exporter API (`MeshExporter`, `MeshExportError`) for `EditableTopology` -> Bevy `Mesh` conversion
+- Round-trip conversion tests for supported manifolds and explicit unsupported-case coverage
 
 ### Changed
 
