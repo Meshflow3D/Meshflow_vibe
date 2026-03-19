@@ -45,6 +45,7 @@ jobs:
             echo "::error::  - APP_NOTARIZATION_TEAM_ID: Apple Developer Team ID"
             echo "::error::  - APP_NOTARIZATION_API_KEY: Notarization API Key (from App Store Connect)"
             echo "::error::  - APP_NOTARIZATION_API_ISSUER_ID: API Issuer ID (from App Store Connect)"
+            echo "::error::Note: DEVELOPER_ID_P12_PASSPHRASE is optional (only required if your .p12 has a password)"
             echo "::error::See: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution"
             exit 1
           else
