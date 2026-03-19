@@ -7,6 +7,9 @@ on:
 permissions:
   contents: write
 
+env:
+  APP_NAME: "Meshflow Vibe"
+
 jobs:
   build:
     if: github.actor == 'mohit-meshflow'
@@ -23,6 +26,239 @@ jobs:
         run: |
           chmod +x scripts/build-release.sh
           bash scripts/build-release.sh
+
+      - name: Check Developer ID credentials
+        id: check_credentials
+        run: |
+          if [ -z "${{ secrets.DEVELOPER_ID_APPLICATION_CERT }}" ] || \
+             [ -z "${{ secrets.APP_SIGNING_KEYCHAIN }}" ] || \
+             [ -z "${{ secrets.APP_SIGNING_KEYCHAIN_PASSWORD }}" ] || \
+             [ -z "${{ secrets.APP_NOTARIZATION_TEAM_ID }}" ] || \
+             [ -z "${{ secrets.APP_NOTARIZATION_API_KEY }}" ] || \
+             [ -z "${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}" ]; then
+            echo "credentials_available=false" >> $GITHUB_OUTPUT
+            echo "::error::Developer ID signing and notarization credentials are not configured."
+            echo "::error::To enable Gatekeeper-compatible releases, the following secrets must be set:"
+            echo "::error::  - DEVELOPER_ID_APPLICATION_CERT: Base64-encoded Developer ID Application certificate (.p12)"
+            echo "::error::  - APP_SIGNING_KEYCHAIN: Name of the keychain to use for signing"
+            echo "::error::  - APP_SIGNING_KEYCHAIN_PASSWORD: Password for the signing keychain"
+            echo "::error::  - APP_NOTARIZATION_TEAM_ID: Apple Developer Team ID"
+            echo "::error::  - APP_NOTARIZATION_API_KEY: Notarization API Key (from App Store Connect)"
+            echo "::error::  - APP_NOTARIZATION_API_ISSUER_ID: API Issuer ID (from App Store Connect)"
+            echo "::error::Note: DEVELOPER_ID_P12_PASSPHRASE is optional (only required if your .p12 has a password)"
+            echo "::error::See: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution"
+            exit 1
+          else
+            echo "credentials_available=true" >> $GITHUB_OUTPUT
+            echo "Credentials check passed"
+          fi
+
+      - name: Setup Signing Keychain
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        env:
+          CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_APPLICATION_CERT }}
+          KEYCHAIN_PASSWORD: ${{ secrets.APP_SIGNING_KEYCHAIN_PASSWORD }}
+          KEYCHAIN_NAME: ${{ secrets.APP_SIGNING_KEYCHAIN }}
+        run: |
+          echo "Setting up signing keychain..."
+          KEYCHAIN_PATH="$HOME/Library/Keychains/${KEYCHAIN_NAME}.keychain-db"
+          
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          
+          # Import certificate
+          echo "$CERTIFICATE_P12" | base64 -D > /tmp/signing.p12
+          P12_PASSPHRASE="${{ secrets.DEVELOPER_ID_P12_PASSPHRASE }}"
+          if [ -z "$P12_PASSPHRASE" ]; then
+            P12_PASSPHRASE=""
+          fi
+          if [ -n "$P12_PASSPHRASE" ]; then
+            security import /tmp/signing.p12 -k "$KEYCHAIN_PATH" -P "$P12_PASSPHRASE" -T /usr/bin/codesign
+          else
+            security import /tmp/signing.p12 -k "$KEYCHAIN_PATH" -P "" -T /usr/bin/codesign
+          fi
+          rm /tmp/signing.p12
+          
+          # Set default keychain
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security list-keychains -s "$KEYCHAIN_PATH"
+          
+          # Set key partition list for non-interactive codesign
+          security set-key-partition-list -k "$KEYCHAIN_PASSWORD" -S "apple-tool:,apple:,codesign:" "$KEYCHAIN_PATH"
+          
+          # Verify certificate is available
+          security find-certificate -c "Developer ID Application" "$KEYCHAIN_PATH" | grep "Developer ID" || {
+            echo "::error::Developer ID Application certificate not found in keychain"
+            exit 1
+          }
+          echo "Keychain setup complete"
+
+      - name: Sign App with Developer ID
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        env:
+          KEYCHAIN_NAME: ${{ secrets.APP_SIGNING_KEYCHAIN }}
+        run: |
+          echo "Signing app bundle with Developer ID..."
+          
+          # Try to get a working certificate identifier (handle numbered output like "  1) ABC123...")
+          # Use || true to prevent pipefail from failing when no match is found
+          CERT_LINE=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | \
+            grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 || echo "")
+          
+          if [ -n "$CERT_LINE" ]; then
+            CERT_IDENTIFIER=$(echo "$CERT_LINE" | sed -E 's/^[[:space:]]*[0-9]+\)[[:space:]]*([0-9A-F]{40}).*/\1/')
+          fi
+          
+          if [ -n "$CERT_IDENTIFIER" ]; then
+            echo "Using certificate: $CERT_IDENTIFIER"
+            codesign --sign "$CERT_IDENTIFIER" --force --deep --options runtime --verbose=2 build/"${{ env.APP_NAME }}.app"
+          else
+            echo "::warning::Could not determine certificate identifier, attempting with Developer ID Application..."
+            codesign --sign "Developer ID Application" --force --deep --options runtime --verbose=2 build/"${{ env.APP_NAME }}.app" || {
+              echo "::error::Failed to sign app bundle with Developer ID"
+              exit 1
+            }
+          fi
+          
+          # Verify signature
+          codesign --verify --deep --strict --verbose=2 build/"${{ env.APP_NAME }}.app" || {
+            echo "::error::App bundle signature verification failed after Developer ID signing"
+            exit 1
+          }
+          echo "Developer ID signing complete"
+
+      - name: Create Notarized DMG
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        env:
+          TEAM_ID: ${{ secrets.APP_NOTARIZATION_TEAM_ID }}
+          API_KEY: ${{ secrets.APP_NOTARIZATION_API_KEY }}
+          API_ISSUER: ${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}
+        run: |
+          echo "Creating notarized DMG..."
+          
+          # Extract version from Cargo.toml
+          VERSION=$(grep -m1 '^version = ' Cargo.toml | sed 's/version = "\([^"]*\)"/\1/')
+          DMG_PATH="build/meshflow-vibe-${VERSION}-macos.dmg"
+          
+          # Re-create DMG with properly signed app
+          hdiutil create -volname "${{ env.APP_NAME }}" \
+            -srcfolder "build/${{ env.APP_NAME }}.app" \
+            -format UDZO \
+            -ov \
+            -o "$DMG_PATH"
+          
+          echo "DMG created: $DMG_PATH"
+
+      - name: Submit for Notarization
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        env:
+          TEAM_ID: ${{ secrets.APP_NOTARIZATION_TEAM_ID }}
+          API_KEY: ${{ secrets.APP_NOTARIZATION_API_KEY }}
+          API_ISSUER: ${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}
+        id: notarize
+        run: |
+          echo "Submitting for notarization..."
+          
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
+          
+          # Submit to Apple Notarization service and capture submission ID
+          # Hardened approach: save full logs to file, then parse deterministically
+          NOTARIZATION_LOG="build/notarization-log.txt"
+          
+          set +e
+          xcrun notarytool submit "$DMG_PATH" \
+            --team-id "$TEAM_ID" \
+            --api-key "$API_KEY" \
+            --api-issuer "$API_ISSUER" \
+            --wait > "$NOTARIZATION_LOG" 2>&1
+          EXIT_CODE=$?
+          set -e
+          
+          # Save notarization log as artifact for debugging
+          cp "$NOTARIZATION_LOG" "build/notarization-output.txt"
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "::error::notarytool submit failed with exit code $EXIT_CODE"
+            echo "::error::Last 10 lines of notarization output:"
+            tail -n 10 "$NOTARIZATION_LOG" | while read line; do
+              echo "::error::$line"
+            done
+            exit 1
+          fi
+          
+          # Parse submission ID deterministically using awk (avoids fragile pipe-to-head)
+          # Looking for line format: "id: <uuid>" with optional leading whitespace
+          # Use || true to prevent set -e from crashing before fallback logic
+          SUBMISSION_ID=$(awk '/^[[:space:]]*id:/{gsub(/^[[:space:]]*id:[[:space:]]*/, ""); print; exit}' "$NOTARIZATION_LOG" || true)
+          
+          if [ -z "$SUBMISSION_ID" ]; then
+            echo "::error::Could not extract submission ID from notarization output"
+            echo "::error::Relevant output from notarization:"
+            grep -E "(id:|error|failed|Error|Failed)" "$NOTARIZATION_LOG" | while read line; do
+              echo "::error::$line"
+            done
+            exit 1
+          fi
+          
+          echo "submission_id=$SUBMISSION_ID" >> $GITHUB_OUTPUT
+          echo "Notarization submission complete (ID: $SUBMISSION_ID)"
+          echo "Full log saved to: $NOTARIZATION_LOG"
+
+      - name: Staple Notarization Ticket
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        run: |
+          echo "Stapling notarization ticket..."
+          
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
+          
+          APP_BUNDLE="build/${{ env.APP_NAME }}.app"
+           
+           # Staple to DMG only - app bundle inside DMG is validated via DMG ticket
+           xcrun stapler staple "$DMG_PATH"
+          
+          echo "Notarization ticket stapled"
+
+      - name: Final Gatekeeper Validation
+        if: steps.check_credentials.outputs.credentials_available == 'true'
+        run: |
+          echo "Performing final Gatekeeper validation..."
+          
+          APP_BUNDLE="build/${{ env.APP_NAME }}.app"
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
+          
+          # Validate app with spctl (Gatekeeper check)
+          echo "Validating app bundle..."
+          spctl -a -vv -t install "$APP_BUNDLE" || {
+            echo "::error::App bundle failed Gatekeeper validation (spctl)"
+            exit 1
+          }
+          
+          # Verify notarization status using submission ID
+          echo "Checking notarization status..."
+          SUBMISSION_ID="${{ steps.notarize.outputs.submission_id }}"
+          if [ -n "$SUBMISSION_ID" ]; then
+            xcrun notarytool info "$SUBMISSION_ID" --team-id "${{ secrets.APP_NOTARIZATION_TEAM_ID }}" \
+              --api-key "${{ secrets.APP_NOTARIZATION_API_KEY }}" \
+              --api-issuer "${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}"
+          else
+            echo "::warning::No submission ID available for notarization info check"
+          fi
+          
+          echo "Gatekeeper validation passed"
 
       - name: Upload DMG to Release
         uses: softprops/action-gh-release@v1
