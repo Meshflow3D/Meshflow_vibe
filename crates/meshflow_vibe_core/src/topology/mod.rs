@@ -1,5 +1,6 @@
 pub mod builder;
 pub mod elements;
+pub mod exporter;
 pub mod ids;
 
 #[cfg(test)]
@@ -7,6 +8,7 @@ mod tests;
 
 pub use builder::{MeshImportError, MeshImporter};
 pub use elements::{Edge, Face, Loop, Vert};
+pub use exporter::{MeshExportError, MeshExporter};
 pub use ids::{EdgeId, FaceId, LoopId, VertId};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
