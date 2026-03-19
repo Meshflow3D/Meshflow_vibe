@@ -16,6 +16,7 @@ pub mod entities;
 pub mod events;
 pub mod setup;
 pub mod shared;
+pub mod topology;
 pub mod world;
 
 #[cfg(test)]
@@ -35,6 +36,10 @@ pub use assets::{
     RequiredMaterialData, RequiredMaterialDataMut, StandardMaterialDef,
 };
 pub use meshflow_vibe_macros::register_editor_components;
+pub use topology::{
+    ids::{EdgeId, FaceId, LoopId, VertId},
+    Edge, EditableTopology, Face, Loop, TopologyValidationError, Vert,
+};
 
 // Marker trait for UI callable events
 pub trait UICallableEventMarker {}
@@ -46,11 +51,11 @@ pub trait UICallableEventProvider {
 }
 
 pub use entities::{
-    BridgeTag, Camera3D, ClassCategory, ComponentEditor, DirLight, EditorIgnore,
-    GraniteEditorSerdeEntity, GraniteType, GraniteTypes, HasRuntimeData, IdentityData, MainCamera,
-    MaterialNameSource, NeedsTangents, PointLightData, PromptData, PromptImportSettings, RectBrush,
-    ReflectedComponent, SaveSettings, SpawnSource, TransformData, TreeHiddenEntity, UICamera,
-    VolumetricFog, OBJ,
+    BridgeTag, Camera3D, ClassCategory, ComponentEditor, DirLight, EditableTopologyRegistry,
+    EditorIgnore, GraniteEditorSerdeEntity, GraniteType, GraniteTypes, HasRuntimeData,
+    IdentityData, MainCamera, MaterialNameSource, NeedsTangents, PointLightData, PromptData,
+    PromptImportSettings, RectBrush, ReflectedComponent, SaveSettings, SpawnSource, TopologyId,
+    TopologyOwner, TransformData, TreeHiddenEntity, UICamera, VolumetricFog, OBJ,
 };
 pub use events::{
     CollectRuntimeDataEvent, RequestDespawnBySource, RequestDespawnSerializableEntities,

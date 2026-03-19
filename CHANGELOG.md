@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Editable topology ownership contract: `TopologyId`, `TopologyOwner`, `EditableTopologyRegistry`
 - CI workflow with CHANGELOG.md validation on PRs (macos-latest)
 - Release workflow for macOS ARM builds (triggered by GitHub release published, mohit-meshflow only)
 - Local build script (scripts/build-release.sh)
