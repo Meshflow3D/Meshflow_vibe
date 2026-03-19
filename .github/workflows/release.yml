@@ -86,7 +86,7 @@ jobs:
           security list-keychains -s "$KEYCHAIN_PATH"
           
           # Set key partition list for non-interactive codesign
-          security set-key-partition-list -s apple-tool:,apple:,codesign: -S "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-key-partition-list -k "$KEYCHAIN_PASSWORD" -S "apple-tool:,apple:,codesign:" "$KEYCHAIN_PATH"
           
           # Verify certificate is available
           security find-certificate -c "Developer ID Application" "$KEYCHAIN_PATH" | grep "Developer ID" || {
@@ -117,7 +117,7 @@ jobs:
           fi
           
           # Try to get a working certificate identifier
-          CERT_IDENTIFIER=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" | grep "Developer ID" | head -1 | sed 's/ *\(.*\) .* /\1/')
+          CERT_IDENTIFIER=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | grep -E "^[[:space:]]*[0-9A-F]{40}" | head -1 | awk '{print $2}')
           
           if [ -n "$CERT_IDENTIFIER" ]; then
             echo "Using certificate: $CERT_IDENTIFIER"
@@ -169,14 +169,18 @@ jobs:
         run: |
           echo "Submitting for notarization..."
           
-          DMG_PATH="build/meshflow-vibe-*.dmg"
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
           
           # Submit to Apple Notarization service and capture submission ID
           SUBMISSION_ID=$(xcrun notarytool submit "$DMG_PATH" \
             --team-id "$TEAM_ID" \
             --api-key "$API_KEY" \
             --api-issuer "$API_ISSUER" \
-            --wait 2>&1 | grep "Submission ID" | sed 's/.*Submission ID: \(.*\)/\1/')
+            --wait 2>&1 | grep -E "^id:" | head -1 | sed 's/^id:[[:space:]]*//')
           
           if [ -z "$SUBMISSION_ID" ]; then
             echo "::error::Could not extract submission ID from notarization output"
@@ -191,7 +195,12 @@ jobs:
         run: |
           echo "Stapling notarization ticket..."
           
-          DMG_PATH="build/meshflow-vibe-*.dmg"
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
+          
           APP_BUNDLE="build/${{ env.APP_NAME }}.app"
           
           # Staple ticket to app bundle
@@ -208,7 +217,11 @@ jobs:
           echo "Performing final Gatekeeper validation..."
           
           APP_BUNDLE="build/${{ env.APP_NAME }}.app"
-          DMG_PATH="build/meshflow-vibe-*.dmg"
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
+            exit 1
+          fi
           
           # Validate app with spctl (Gatekeeper check)
           echo "Validating app bundle..."
