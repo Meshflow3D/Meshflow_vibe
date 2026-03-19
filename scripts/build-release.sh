@@ -100,7 +100,8 @@ echo "Copying assets to .app bundle..."
 cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/MacOS/"
 
 # Sign the app bundle with ad-hoc signature for local testing
-# This creates a valid codesignature that passes Gatekeeper checks
+# Note: Ad-hoc signing creates a valid signature blob but generally won't pass
+# Gatekeeper (spctl) checks; full Developer ID signing is required for distribution
 echo "Signing app bundle..."
 codesign --sign - --force --deep --verbose=2 "$APP_BUNDLE"
 

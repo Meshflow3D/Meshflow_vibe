@@ -68,13 +68,24 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           
           # Import certificate
-          echo "$CERTIFICATE_P12" | base64 --decode > /tmp/signing.p12
-          security import /tmp/signing.p12 -k "$KEYCHAIN_PATH" -P "$KEYCHAIN_PASSWORD" -T /usr/bin/codesign
+          echo "$CERTIFICATE_P12" | base64 -D > /tmp/signing.p12
+          P12_PASSPHRASE="${{ secrets.DEVELOPER_ID_P12_PASSPHRASE }}"
+          if [ -z "$P12_PASSPHRASE" ]; then
+            P12_PASSPHRASE=""
+          fi
+          if [ -n "$P12_PASSPHRASE" ]; then
+            security import /tmp/signing.p12 -k "$KEYCHAIN_PATH" -P "$P12_PASSPHRASE" -T /usr/bin/codesign
+          else
+            security import /tmp/signing.p12 -k "$KEYCHAIN_PATH" -P "" -T /usr/bin/codesign
+          fi
           rm /tmp/signing.p12
           
           # Set default keychain
           security default-keychain -s "$KEYCHAIN_PATH"
           security list-keychains -s "$KEYCHAIN_PATH"
+          
+          # Set key partition list for non-interactive codesign
+          security set-key-partition-list -s apple-tool:,apple:,codesign: -S "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           
           # Verify certificate is available
           security find-certificate -c "Developer ID Application" "$KEYCHAIN_PATH" | grep "Developer ID" || {
@@ -109,10 +120,10 @@ jobs:
           
           if [ -n "$CERT_IDENTIFIER" ]; then
             echo "Using certificate: $CERT_IDENTIFIER"
-            codesign --sign "$CERT_IDENTIFIER" --force --deep --verbose=2 build/"${{ env.APP_NAME }}.app"
+            codesign --sign "$CERT_IDENTIFIER" --force --deep --options runtime --verbose=2 build/"${{ env.APP_NAME }}.app"
           else
             echo "::warning::Could not determine certificate identifier, attempting with Developer ID Application..."
-            codesign --sign "Developer ID Application" --force --deep --verbose=2 build/"${{ env.APP_NAME }}.app" || {
+            codesign --sign "Developer ID Application" --force --deep --options runtime --verbose=2 build/"${{ env.APP_NAME }}.app" || {
               echo "::error::Failed to sign app bundle with Developer ID"
               exit 1
             }
@@ -130,7 +141,7 @@ jobs:
         env:
           TEAM_ID: ${{ secrets.APP_NOTARIZATION_TEAM_ID }}
           API_KEY: ${{ secrets.APP_NOTARIZATION_API_KEY }}
-          API_ISSUER: ${{ secrets.APP_NOTARIZATION_API_ISSUER }}
+          API_ISSUER: ${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}
         run: |
           echo "Creating notarized DMG..."
           
@@ -153,19 +164,26 @@ jobs:
           TEAM_ID: ${{ secrets.APP_NOTARIZATION_TEAM_ID }}
           API_KEY: ${{ secrets.APP_NOTARIZATION_API_KEY }}
           API_ISSUER: ${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}
+        id: notarize
         run: |
           echo "Submitting for notarization..."
           
           DMG_PATH="build/meshflow-vibe-*.dmg"
           
-          # Submit to Apple Notarization service
-          xcrun notarytool submit "$DMG_PATH" \
+          # Submit to Apple Notarization service and capture submission ID
+          SUBMISSION_ID=$(xcrun notarytool submit "$DMG_PATH" \
             --team-id "$TEAM_ID" \
             --api-key "$API_KEY" \
             --api-issuer "$API_ISSUER" \
-            --wait
+            --wait 2>&1 | grep "Submission ID" | sed 's/.*Submission ID: \(.*\)/\1/')
           
-          echo "Notarization submission complete"
+          if [ -z "$SUBMISSION_ID" ]; then
+            echo "::error::Could not extract submission ID from notarization output"
+            exit 1
+          fi
+          
+          echo "submission_id=$SUBMISSION_ID" >> $GITHUB_OUTPUT
+          echo "Notarization submission complete (ID: $SUBMISSION_ID)"
 
       - name: Staple Notarization Ticket
         if: steps.check_credentials.outputs.credentials_available == 'true'
@@ -198,11 +216,16 @@ jobs:
             exit 1
           }
           
-          # Verify notarization status
+          # Verify notarization status using submission ID
           echo "Checking notarization status..."
-          xcrun notarytool info "$DMG_PATH" --team-id "${{ secrets.APP_NOTARIZATION_TEAM_ID }}" \
-            --api-key "${{ secrets.APP_NOTARIZATION_API_KEY }}" \
-            --api-issuer "${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}"
+          SUBMISSION_ID="${{ steps.notarize.outputs.submission_id }}"
+          if [ -n "$SUBMISSION_ID" ]; then
+            xcrun notarytool info "$SUBMISSION_ID" --team-id "${{ secrets.APP_NOTARIZATION_TEAM_ID }}" \
+              --api-key "${{ secrets.APP_NOTARIZATION_API_KEY }}" \
+              --api-issuer "${{ secrets.APP_NOTARIZATION_API_ISSUER_ID }}"
+          else
+            echo "::warning::No submission ID available for notarization info check"
+          fi
           
           echo "Gatekeeper validation passed"
 
