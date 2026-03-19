@@ -102,22 +102,14 @@ jobs:
         run: |
           echo "Signing app bundle with Developer ID..."
           
-          # Get the Developer ID Application certificate name
-          CERT_NAME=$(security find-certificate -c "Developer ID Application" "$HOME/Library/Keychains/${KEYCHAIN_NAME}.keychain-db" | \
-            grep -A 1 "Subject:" | grep "Organizational Unit:" | sed 's/.*OU: \(.*\), CN.*/\1/' | head -1)
-          
-          if [ -z "$CERT_NAME" ]; then
-            CERT_NAME=$(security find-certificate -c "Developer ID Application" "$HOME/Library/Keychains/${KEYCHAIN_NAME}.keychain-db" | \
-              grep "Developer ID Application" | head -1 | sed 's/.*"\(.*Developer ID Application.*\)".*/\1/')
-          fi
-          
-          if [ -z "$CERT_NAME" ]; then
-            CERT_NAME=$(security find-certificate -c "Developer ID Application" -p "$HOME/Library/Keychains/${KEYCHAIN_NAME}.keychain-db" | \
-              grep "Developer ID Application" | head -1)
-          fi
-          
           # Try to get a working certificate identifier (handle numbered output like "  1) ABC123...")
-          CERT_IDENTIFIER=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 | sed -E 's/^[[:space:]]*[0-9]+\)[[:space:]]*([0-9A-F]{40}).*/\1/')
+          # Use || true to prevent pipefail from failing when no match is found
+          CERT_LINE=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | \
+            grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 || true)
+          
+          if [ -n "$CERT_LINE" ]; then
+            CERT_IDENTIFIER=$(echo "$CERT_LINE" | sed -E 's/^[[:space:]]*[0-9]+\)[[:space:]]*([0-9A-F]{40}).*/\1/')
+          fi
           
           if [ -n "$CERT_IDENTIFIER" ]; then
             echo "Using certificate: $CERT_IDENTIFIER"
