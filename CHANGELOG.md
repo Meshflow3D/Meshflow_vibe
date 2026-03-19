@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release workflow for macOS ARM builds (triggered by GitHub release published, mohit-meshflow only)
 - Local build script (scripts/build-release.sh)
 - Clippy and format checks in CI
+- Gatekeeper-compatible release flow with Developer ID signing and notarization
+- Automated notarization ticket stapling for offline validation
+- Explicit credential validation before release upload
 
 ### Changed
 
