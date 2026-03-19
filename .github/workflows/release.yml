@@ -202,12 +202,9 @@ jobs:
           fi
           
           APP_BUNDLE="build/${{ env.APP_NAME }}.app"
-          
-          # Staple ticket to app bundle
-          xcrun stapler staple "$APP_BUNDLE"
-          
-          # Also staple to DMG
-          xcrun stapler staple "$DMG_PATH"
+           
+           # Staple to DMG only - app bundle inside DMG is validated via DMG ticket
+           xcrun stapler staple "$DMG_PATH"
           
           echo "Notarization ticket stapled"
 
