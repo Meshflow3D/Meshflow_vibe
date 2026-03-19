@@ -24,13 +24,19 @@ use meshflow_vibe_logging::{
 };
 
 /// System that spawns vertex visualizations for all selected entities
+#[allow(clippy::type_complexity)]
 pub fn spawn_vertex_visualizations(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut config: ResMut<VertexVisualizationConfig>,
     gizmo_type: Res<NewGizmoType>,
-    selected_entities: Query<(Entity, &Mesh3d), (With<Selected>, Without<HasVertexVisualizations>)>,
+    selected_entities: Query<
+        '_,
+        '_,
+        (Entity, &'_ Mesh3d),
+        (With<Selected>, Without<HasVertexVisualizations>),
+    >,
 ) {
     if !matches!(**gizmo_type, GizmoType::Pointer) || !config.enabled {
         return;
@@ -256,7 +262,7 @@ pub fn cull_vertices_by_distance(
 
         // Scale vertices with distance to maintain consistent screen size
         // Further away = bigger scale to compensate for perspective
-        let scale_factor = (distance * 0.5).max(0.5).min(15.0);
+        let scale_factor = (distance * 0.5).clamp(0.5, 15.0);
         vertex_transform.scale = Vec3::splat(scale_factor);
     }
 }

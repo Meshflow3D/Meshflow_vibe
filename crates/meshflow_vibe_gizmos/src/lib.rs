@@ -18,6 +18,7 @@
 //! Add the `MeshflowVibeGizmos` plugin to your Bevy app:
 //!
 //! ```rust,no_run
+//! # #[allow(clippy::needless_doctest_main)]
 //! use bevy::prelude::*;
 //! use meshflow_vibe_gizmos::MeshflowVibeGizmos;
 //!

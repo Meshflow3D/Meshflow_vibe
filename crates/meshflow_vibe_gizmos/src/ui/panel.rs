@@ -13,6 +13,7 @@ use crate::{
     ActiveSelection,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn editor_gizmos_ui(
     mut contexts: EguiContexts,
     mut selected_option: ResMut<NewGizmoType>,

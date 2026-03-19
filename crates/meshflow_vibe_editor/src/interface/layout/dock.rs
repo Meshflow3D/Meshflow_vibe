@@ -15,11 +15,13 @@ use crate::{
 use bevy::{
     camera::{Camera, Camera3d, RenderTarget},
     ecs::system::{Commands, Query},
-    prelude::{Entity, Name, Res, ResMut},
+    prelude::{Entity, Name, Res, ResMut, With},
 };
 use bevy_egui::{egui, EguiContexts};
 use egui_dock::DockArea;
-use meshflow_vibe_core::{UICamera, UserInput};
+use meshflow_vibe_core::entities::edit_mode::EditSession;
+use meshflow_vibe_core::{TopologyOwner, UICamera, UserInput};
+use meshflow_vibe_gizmos::selection::ActiveSelection;
 use meshflow_vibe_gizmos::GizmoCamera;
 use serde::{Deserialize, Serialize};
 
@@ -49,6 +51,7 @@ pub struct DockState {
     pub changed: bool,
 }
 
+#[allow(clippy::type_complexity, clippy::too_many_arguments)]
 pub fn dock_ui_system(
     mut contexts: EguiContexts,
     mut side_dock: ResMut<SideDockState>,
@@ -57,6 +60,7 @@ pub fn dock_ui_system(
     editor_state: Res<EditorState>,
     user_input: Res<UserInput>,
     mut commands: Commands,
+    edit_session: ResMut<EditSession>,
     camera_query: Query<(
         Entity,
         Option<&Name>,
@@ -68,6 +72,7 @@ pub fn dock_ui_system(
         Option<&RenderTarget>,
     )>,
     viewport_camera_state: Res<ViewportCameraState>,
+    active_selection_with_topology: Query<(Entity, &TopologyOwner), With<ActiveSelection>>,
 ) {
     let mut camera_options: Vec<(Entity, String)> = camera_query
         .iter()
@@ -129,6 +134,8 @@ pub fn dock_ui_system(
                     &mut commands,
                     &camera_options,
                     viewport_camera_state.as_ref(),
+                    edit_session,
+                    &active_selection_with_topology,
                 );
             });
         });

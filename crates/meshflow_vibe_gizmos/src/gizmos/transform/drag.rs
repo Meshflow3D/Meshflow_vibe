@@ -83,6 +83,7 @@ pub struct TransformDuplicationState {
 /// * `gizmo_config_query` - Query for gizmo configuration
 /// * `user_input` - Resource containing current user input state
 /// * `duplication_state` - Mutable reference to duplication state resource
+#[allow(clippy::too_many_arguments)]
 pub fn drag_transform_gizmo(
     event: On<Pointer<Drag>>,
     mut command: Commands,
@@ -210,12 +211,10 @@ pub fn drag_transform_gizmo(
 
     let target_rotation = if let Ok(global_transform) = global_transforms.get(*target) {
         global_transform.to_scale_rotation_translation().1
+    } else if let Ok(transform) = objects.get(*target) {
+        transform.rotation
     } else {
-        if let Ok(transform) = objects.get(*target) {
-            transform.rotation
-        } else {
-            Quat::IDENTITY
-        }
+        Quat::IDENTITY
     };
 
     let (active_axis, normal) = match typ {
@@ -510,7 +509,7 @@ pub fn draw_axis_lines(
     }
 
     commands.spawn((
-        axis.clone(),
+        *axis,
         GizmoOf(root.0),
         Gizmo {
             handle: bevy_gizmo.add(asset),

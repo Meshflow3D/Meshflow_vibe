@@ -16,18 +16,22 @@ use crate::{
     viewport::ViewportCameraState,
     UI_CONFIG,
 };
+
 use bevy::{
     ecs::{entity::Entity, system::Commands},
-    prelude::ResMut,
+    prelude::{Query, ResMut, With},
 };
 use bevy_egui::egui;
 use meshflow_vibe_core::{
-    absolute_asset_to_rel, entities::SaveSettings, RequestDespawnBySource,
+    absolute_asset_to_rel, entities::edit_mode::EditSession, entities::SaveSettings,
+    entities::SwitchSubSelectionMode, entities::TopologyOwner, RequestDespawnBySource,
     RequestDespawnSerializableEntities, RequestLoadEvent, RequestSaveEvent, UserInput,
 };
 use meshflow_vibe_gizmos::selection::events::EntityEvents;
+use meshflow_vibe_gizmos::selection::ActiveSelection;
 use native_dialog::FileDialog;
 
+#[allow(clippy::too_many_arguments)]
 pub fn top_bar_ui(
     side_dock: &mut ResMut<SideDockState>,
     bottom_dock: &mut ResMut<BottomDockState>,
@@ -38,6 +42,8 @@ pub fn top_bar_ui(
     commands: &mut Commands,
     camera_options: &[(Entity, String)],
     viewport_camera_state: &ViewportCameraState,
+    edit_session: ResMut<EditSession>,
+    active_selection_with_topology: &Query<(Entity, &TopologyOwner), With<ActiveSelection>>,
 ) {
     let active_camera_label = if viewport_camera_state.is_using_editor() {
         "Editor Camera".to_string()
@@ -116,7 +122,7 @@ pub fn top_bar_ui(
                         let sources: Vec<String> =
                             editor_state.loaded_sources.iter().cloned().collect();
                         for source in sources {
-                            if ui.button(format!("{}", source)).clicked() {
+                            if ui.button(source.to_string()).clicked() {
                                 events
                                     .despawn_by_source
                                     .write(RequestDespawnBySource(source));
@@ -179,7 +185,7 @@ pub fn top_bar_ui(
             });
 
             ui.menu_button("Panels", |ui| {
-                for (tab_type, label) in vec![
+                for (tab_type, label) in [
                     (SideTabType::EntityEditor, "Entity Editor"),
                     (SideTabType::NodeTree, "Entities"),
                     (SideTabType::EditorSettings, "Editor Settings"),
@@ -205,7 +211,7 @@ pub fn top_bar_ui(
 
                 ui.separator();
 
-                for (tab_type, label) in vec![
+                for (tab_type, label) in [
                     (BottomTabType::Log, "Log"),
                     (BottomTabType::Debug, "Debug"),
                     (BottomTabType::Events, "Events"),
@@ -293,12 +299,48 @@ pub fn top_bar_ui(
             });
 
             ui.separator();
-            if ui.button("Frame Active (F) ").clicked() {
+            if !edit_session.is_active() && ui.button("Frame Active (F) ").clicked() {
                 events.frame.write(RequestCameraEntityFrame);
             }
             ui.separator();
             if ui.button("Deselect All (U) ").clicked() {
                 commands.trigger(EntityEvents::DeselectAll);
+            }
+            ui.separator();
+            if !edit_session.is_active() && ui.button("Enter Edit Mode").clicked() {
+                if let Some((entity, topology_owner)) = active_selection_with_topology.iter().next()
+                {
+                    events.enter_edit_mode.write(
+                        meshflow_vibe_core::entities::edit_mode::EnterEditMode {
+                            entity,
+                            topology_id: topology_owner.topology_id,
+                        },
+                    );
+                }
+            }
+            ui.separator();
+            if edit_session.is_active() && ui.button("Exit Edit Mode").clicked() {
+                events
+                    .exit_edit_mode
+                    .write(meshflow_vibe_core::entities::edit_mode::ExitEditMode);
+            }
+            ui.separator();
+            if edit_session.is_active() && ui.button("Vertex Select (V) ").clicked() {
+                events.switch_mode.write(SwitchSubSelectionMode {
+                    mode: meshflow_vibe_core::entities::edit_mode::Mode::Vertex,
+                });
+            }
+            ui.separator();
+            if edit_session.is_active() && ui.button("Edge Select (E) ").clicked() {
+                events.switch_mode.write(SwitchSubSelectionMode {
+                    mode: meshflow_vibe_core::entities::edit_mode::Mode::Edge,
+                });
+            }
+            ui.separator();
+            if edit_session.is_active() && ui.button("Face Select (F) ").clicked() {
+                events.switch_mode.write(SwitchSubSelectionMode {
+                    mode: meshflow_vibe_core::entities::edit_mode::Mode::Face,
+                });
             }
             ui.separator();
         });

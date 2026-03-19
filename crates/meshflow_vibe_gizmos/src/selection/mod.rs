@@ -19,7 +19,7 @@ impl ActiveSelection {
     fn on_remove(mut world: DeferredWorld, ctx: HookContext) {
         if let Ok(_entity_commands) = world.commands().get_entity(ctx.entity) {
             if let Some(gizmos) = world.entity(ctx.entity).get::<crate::gizmos::Gizmos>() {
-                let targets: Vec<_> = gizmos.entities().iter().copied().collect();
+                let targets: Vec<_> = gizmos.entities().to_vec();
                 let mut commands = world.commands();
                 for target in targets {
                     // Use try_despawn to avoid errors when entity doesn't exist

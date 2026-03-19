@@ -9,6 +9,7 @@ use bevy::prelude::{
     Res, ResMut, StandardMaterial, With, Without,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn gizmo_events(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

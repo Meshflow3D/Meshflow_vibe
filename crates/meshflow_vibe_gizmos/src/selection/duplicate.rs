@@ -172,7 +172,7 @@ fn collect_entity_info(world: &World, entity: Entity) -> Option<EntityInfo> {
         .components()
         .iter()
         .filter_map(|component_id| {
-            let component_info = world.components().get_info(component_id.clone())?;
+            let component_info = world.components().get_info(*component_id)?;
 
             log!(
                 LogType::Editor,
@@ -351,11 +351,9 @@ fn copy_components_safe(
                     target_ref.insert(new_identity);
                 }
             }
-        } else {
-            if let Ok(cloned_component) = reflected_component.reflect_clone() {
-                if let Ok(mut target_ref) = world.get_entity_mut(target_entity) {
-                    reflect_component.insert(&mut target_ref, &*cloned_component, &registry_guard);
-                }
+        } else if let Ok(cloned_component) = reflected_component.reflect_clone() {
+            if let Ok(mut target_ref) = world.get_entity_mut(target_entity) {
+                reflect_component.insert(&mut target_ref, &*cloned_component, &registry_guard);
             }
         }
     }
@@ -365,9 +363,7 @@ fn log_copied_components(world: &World, entity: Entity) {
     let mut component_names = Vec::new();
     if let Ok(entity_ref) = world.get_entity(entity) {
         for archetype_component_id in entity_ref.archetype().components() {
-            if let Some(component_info) =
-                world.components().get_info(archetype_component_id.clone())
-            {
+            if let Some(component_info) = world.components().get_info(*archetype_component_id) {
                 component_names.push(component_info.name());
             }
         }

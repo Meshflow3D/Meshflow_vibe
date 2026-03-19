@@ -28,12 +28,19 @@ use crate::entities::EntityPlugin;
 use crate::shared::SharedPlugin;
 use crate::world::WorldPlugin;
 
-// Re-exports
+// Re-exports (entities/mod.rs re-exports all entity types)
 pub use assets::{
     get_material_from_path, load_texture_with_repeat, material_from_path_into_scene,
     materials_from_folder_into_scene, AvailableEditableMaterials, EditableMaterial,
     EditableMaterialError, EditableMaterialField, MaterialData, NewEditableMaterial,
     RequiredMaterialData, RequiredMaterialDataMut, StandardMaterialDef,
+};
+pub use entities::{
+    BridgeTag, Camera3D, ClassCategory, ComponentEditor, DirLight, EditableTopologyRegistry,
+    EditorIgnore, GraniteEditorSerdeEntity, GraniteType, GraniteTypes, HasRuntimeData,
+    IdentityData, MainCamera, MaterialNameSource, NeedsTangents, PointLightData, PromptData,
+    PromptImportSettings, RectBrush, ReflectedComponent, SaveSettings, SpawnSource, TopologyId,
+    TopologyOwner, TransformData, TreeHiddenEntity, UICamera, VolumetricFog, OBJ,
 };
 pub use meshflow_vibe_macros::register_editor_components;
 pub use topology::{
@@ -51,12 +58,9 @@ pub trait UICallableEventProvider {
     fn get_event_names() -> &'static [&'static str];
 }
 
-pub use entities::{
-    BridgeTag, Camera3D, ClassCategory, ComponentEditor, DirLight, EditableTopologyRegistry,
-    EditorIgnore, GraniteEditorSerdeEntity, GraniteType, GraniteTypes, HasRuntimeData,
-    IdentityData, MainCamera, MaterialNameSource, NeedsTangents, PointLightData, PromptData,
-    PromptImportSettings, RectBrush, ReflectedComponent, SaveSettings, SpawnSource, TopologyId,
-    TopologyOwner, TransformData, TreeHiddenEntity, UICamera, VolumetricFog, OBJ,
+pub use entities::edit_mode::{
+    EditModePlugin, EditSession, EnterEditMode, ExitEditMode, InEditMode, OnEnterEditMode,
+    OnExitEditMode,
 };
 pub use events::{
     CollectRuntimeDataEvent, RequestDespawnBySource, RequestDespawnSerializableEntities,
@@ -87,12 +91,13 @@ impl Plugin for MeshflowVibeCore {
                 auto_create_primary_context: false,
                 ..Default::default()
             })
-            .add_plugins(EguiPlugin::default()) // for UserInput checking if we are over Egui. Ideally a better solution is available as this is the core crate that doest use UI
+            .add_plugins(EguiPlugin::default()) // for UserInput checking if we are over Egui. Ideally a better solution is available as this is the core crate that doesn't use UI
             // Internal
             .add_plugins(EntityPlugin)
             .add_plugins(WorldPlugin)
             .add_plugins(AssetPlugin)
             .add_plugins(SharedPlugin)
+            .add_plugins(entities::edit_mode::EditModePlugin)
             //
             // Events
             //

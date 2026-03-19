@@ -32,6 +32,7 @@ pub fn watch_for_main_camera_addition(
 }
 
 // Add Gizmo camera
+#[allow(clippy::type_complexity)]
 pub fn add_gizmo_camera(
     gizmo_camera_query: Query<&mut Transform, With<GizmoCamera>>,
     main_camera_query: Query<

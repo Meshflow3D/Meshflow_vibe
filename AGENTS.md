@@ -76,7 +76,7 @@ cargo run --release --example dungeon
 
 ## Recent Changes
 
-
+- **2026-03-19**: Wave 1 edit mode session state - added `EditSession` resource, `InEditMode` marker, `EnterEditMode`/`ExitEditMode` Message types, `OnEnterEditMode`/`OnExitEditMode` observer events, mode eligibility checks; fixed Bevy 0.18 Message API compatibility (Event→Message, .add_message(), MessageWriter::write()); fixed Entity creation in tests (Entity::from_bits())
 - **2026-03-19**: Release workflow updated with Gatekeeper-compatible signing flow; now requires Developer ID Application certificate and Apple notarization credentials for production releases; fails loudly with explicit error message if credentials are missing instead of silently shipping ad-hoc signed artifacts
 - **2026-03-19**: Wave 3 editable topology foundation - added ownership contract with TopologyId, TopologyOwner, EditableTopologyRegistry; TopologyId Default now returns dummy sentinel (u64::MAX)
 - **2026-03-19**: Mesh exporter API added for EditableTopology -> Bevy Mesh conversion with explicit error types for unsupported cases (non-triangle faces, non-manifold edges); round-trip tests added for cube and non-manifold failure case

@@ -23,6 +23,7 @@ pub struct UserInput {
     pub shift_left: UserButtonState,
     pub ctrl_left: UserButtonState,
     pub alt_left: UserButtonState,
+    pub key_v: UserButtonState,
     pub key_w: UserButtonState,
     pub key_u: UserButtonState,
     pub key_f1: UserButtonState,
@@ -142,6 +143,7 @@ pub fn capture_input_events(
     let mut shift_left = user_input.shift_left;
     let mut ctrl_left = user_input.ctrl_left;
     let mut alt_left = user_input.alt_left;
+    let mut key_v = user_input.key_v;
     let mut key_w = user_input.key_w;
     let mut key_o = user_input.key_o;
     let mut key_p = user_input.key_p;
@@ -186,6 +188,7 @@ pub fn capture_input_events(
     key_f2.update_key(&keyboard_input, KeyCode::F2, &mut user_input);
     key_f3.update_key(&keyboard_input, KeyCode::F3, &mut user_input);
     key_q.update_key(&keyboard_input, KeyCode::KeyQ, &mut user_input);
+    key_v.update_key(&keyboard_input, KeyCode::KeyV, &mut user_input);
     key_f.update_key(&keyboard_input, KeyCode::KeyF, &mut user_input);
     key_space.update_key(&keyboard_input, KeyCode::Space, &mut user_input);
 
@@ -196,6 +199,7 @@ pub fn capture_input_events(
     user_input.mouse_middle = mouse_middle;
     user_input.shift_left = shift_left;
     user_input.ctrl_left = ctrl_left;
+    user_input.key_v = key_v;
     user_input.key_w = key_w;
     user_input.key_p = key_p;
     user_input.key_u = key_u;

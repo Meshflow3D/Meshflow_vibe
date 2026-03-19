@@ -5,9 +5,11 @@ use crate::interface::tabs::entity_editor::{
 use bevy::ecs::message::MessageWriter;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::{Entity, Message, Vec2};
+use meshflow_vibe_core::entities::edit_mode::{EnterEditMode, ExitEditMode};
+use meshflow_vibe_core::entities::SwitchSubSelectionMode;
 use meshflow_vibe_core::RequestDespawnBySource;
 use meshflow_vibe_core::RequestDespawnSerializableEntities;
-use meshflow_vibe_core::{EditableMaterial, GraniteTypes};
+use meshflow_vibe_core::{EditableMaterial, GraniteTypes, TopologyId};
 use meshflow_vibe_core::{RequestLoadEvent, RequestReloadEvent, RequestSaveEvent};
 
 #[derive(SystemParam)]
@@ -27,6 +29,9 @@ pub struct EditorEvents<'w> {
     pub despawn_all: MessageWriter<'w, RequestDespawnSerializableEntities>,
     pub despawn_by_source: MessageWriter<'w, RequestDespawnBySource>,
     pub set_active_world: MessageWriter<'w, SetActiveWorld>,
+    pub switch_mode: MessageWriter<'w, SwitchSubSelectionMode>,
+    pub enter_edit_mode: MessageWriter<'w, EnterEditMode>,
+    pub exit_edit_mode: MessageWriter<'w, ExitEditMode>,
 }
 
 // Internal Events
@@ -109,3 +114,13 @@ pub struct RequestRemoveParentsFromEntities {
 
 #[derive(Message)]
 pub struct RequestRemoveChildren;
+
+// Edit mode events
+#[derive(Message)]
+pub struct RequestEnterEditMode {
+    pub entity: Entity,
+    pub topology_id: TopologyId,
+}
+
+#[derive(Message)]
+pub struct RequestExitEditMode;
