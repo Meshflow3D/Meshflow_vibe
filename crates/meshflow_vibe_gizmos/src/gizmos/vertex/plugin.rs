@@ -7,11 +7,7 @@ use super::{
         despawn_vertex_visualizations, spawn_vertex_visualizations,
     },
 };
-use crate::is_gizmos_active;
-use bevy::{
-    app::{App, Plugin, Update},
-    ecs::schedule::IntoScheduleConfigs,
-};
+use bevy::app::{App, Plugin, Update};
 
 pub struct VertexVisualizationPlugin;
 
@@ -24,16 +20,22 @@ impl Plugin for VertexVisualizationPlugin {
             // Systems
             .add_systems(
                 Update,
+                (spawn_vertex_visualizations, despawn_vertex_visualizations),
+            )
+            .add_systems(
+                Update,
                 (
-                    spawn_vertex_visualizations,
-                    despawn_vertex_visualizations,
                     cleanup_deselected_entity_vertices,
                     cull_vertices_by_distance,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
                     update_vertex_colors,
                     deselect_all_vertices,
                     calculate_vertex_midpoint,
-                )
-                    .run_if(is_gizmos_active),
+                ),
             )
             // Observer for vertex clicks
             .add_observer(handle_vertex_click);

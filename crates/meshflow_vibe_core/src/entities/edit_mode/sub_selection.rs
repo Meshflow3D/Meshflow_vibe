@@ -5,8 +5,8 @@
 //!
 //! # Architecture
 //!
-//! - `SubSelectionMode` - Enum of available sub-selection modes
-//! - `EditSession` - Resource tracking current sub-selection mode
+//! - `SubSelectionMode` - Resource struct containing the current sub-selection mode
+//! - `EditSession` - Resource tracking current edit session
 //! - `SwitchSubSelectionMode` - Event for mode transitions
 //! - `OnSubSelectionModeSwitched` - Observer event for mode changes
 //!

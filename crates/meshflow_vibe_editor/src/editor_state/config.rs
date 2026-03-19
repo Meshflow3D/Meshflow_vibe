@@ -113,6 +113,7 @@ pub static INTERFACE_CONFIG: LazyLock<toml::Value> = LazyLock::new(|| {
     toml::from_str(INTERFACE_CONFIG_TOML).expect("Failed to parse config.toml configuration")
 });
 
+#[allow(clippy::manual_try_fold)]
 pub fn get_interface_config(path: &str) -> Option<&'static toml::Value> {
     path.split('.')
         .fold(Some(&*INTERFACE_CONFIG), |current, key| current?.get(key))

@@ -92,6 +92,7 @@ pub fn handle_rotate_input(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_init_rotate_drag(
     mut events: MessageReader<RotateInitDragEvent>,
     mut drag_state: ResMut<DragState>,
@@ -240,6 +241,7 @@ fn hide_unselected_axes(
 
 /// ANGULAR movement for locked axis. We dont want pixel delta for locked axis.
 /// Free rotate can use mouse delta
+#[allow(clippy::too_many_arguments)]
 pub fn handle_rotate_dragging(
     event: On<Pointer<Drag>>,
     targets: Query<&GizmoOf>,
@@ -333,12 +335,10 @@ pub fn handle_rotate_dragging(
     // Get target rotation for local/global mode
     let target_rotation = if let Ok(global_transform) = global_transforms.get(target.0) {
         global_transform.to_scale_rotation_translation().1
+    } else if let Ok(transform) = objects.get(target.0) {
+        transform.rotation
     } else {
-        if let Ok(transform) = objects.get(target.0) {
-            transform.rotation
-        } else {
-            Quat::IDENTITY
-        }
+        Quat::IDENTITY
     };
 
     let (final_rotation, local_axis) = match gizmo_axis {
@@ -481,7 +481,7 @@ pub fn handle_rotate_dragging(
                 GizmoMode::Local => {
                     if let Some((local_axis, signed_angle)) = local_axis {
                         let local_rotation = Quat::from_axis_angle(local_axis, signed_angle);
-                        entity_transform.rotation = entity_transform.rotation * local_rotation;
+                        entity_transform.rotation *= local_rotation;
                     } else {
                         entity_transform.rotation = final_rotation * entity_transform.rotation;
                     }

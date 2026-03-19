@@ -1,7 +1,7 @@
 use super::{
     apply_pending_parents, duplicate_all_selection_system, duplicate_entity_system,
-    handle_picking_selection, select_entity, ActiveSelection, RaycastCursorLast, RaycastCursorPos,
-    RequestDuplicateAllSelectionEvent, RequestDuplicateEntityEvent, Selected,
+    handle_picking_selection, select_entity, RaycastCursorLast, RaycastCursorPos,
+    RequestDuplicateAllSelectionEvent, RequestDuplicateEntityEvent,
 };
 use crate::{
     gizmos::vertex::{components::SelectedVertex, config::VertexSelectionState},

@@ -51,6 +51,7 @@ pub struct DockState {
     pub changed: bool,
 }
 
+#[allow(clippy::type_complexity, clippy::too_many_arguments)]
 pub fn dock_ui_system(
     mut contexts: EguiContexts,
     mut side_dock: ResMut<SideDockState>,
