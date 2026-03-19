@@ -176,19 +176,46 @@ jobs:
           fi
           
           # Submit to Apple Notarization service and capture submission ID
-          SUBMISSION_ID=$(xcrun notarytool submit "$DMG_PATH" \
+          # Hardened approach: save full logs to file, then parse deterministically
+          NOTARIZATION_LOG="build/notarization-log.txt"
+          
+          set +e
+          xcrun notarytool submit "$DMG_PATH" \
             --team-id "$TEAM_ID" \
             --api-key "$API_KEY" \
             --api-issuer "$API_ISSUER" \
-            --wait 2>&1 | grep -E "^[[:space:]]*id:" | head -1 | sed 's/^[[:space:]]*id:[[:space:]]*//')
+            --wait > "$NOTARIZATION_LOG" 2>&1
+          EXIT_CODE=$?
+          set -e
+          
+          # Save notarization log as artifact for debugging
+          cp "$NOTARIZATION_LOG" "build/notarization-output.txt"
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "::error::notarytool submit failed with exit code $EXIT_CODE"
+            echo "::error::Last 10 lines of notarization output:"
+            tail -n 10 "$NOTARIZATION_LOG" | while read line; do
+              echo "::error::$line"
+            done
+            exit 1
+          fi
+          
+          # Parse submission ID deterministically using awk (avoids fragile pipe-to-head)
+          # Looking for line format: "id: <uuid>" with optional leading whitespace
+          SUBMISSION_ID=$(awk '/^[[:space:]]*id:/{gsub(/^[[:space:]]*id:[[:space:]]*/, ""); print; exit}' "$NOTARIZATION_LOG")
           
           if [ -z "$SUBMISSION_ID" ]; then
             echo "::error::Could not extract submission ID from notarization output"
+            echo "::error::Relevant output from notarization:"
+            grep -E "(id:|error|failed|Error|Failed)" "$NOTARIZATION_LOG" | while read line; do
+              echo "::error::$line"
+            done
             exit 1
           fi
           
           echo "submission_id=$SUBMISSION_ID" >> $GITHUB_OUTPUT
           echo "Notarization submission complete (ID: $SUBMISSION_ID)"
+          echo "Full log saved to: $NOTARIZATION_LOG"
 
       - name: Staple Notarization Ticket
         if: steps.check_credentials.outputs.credentials_available == 'true'
