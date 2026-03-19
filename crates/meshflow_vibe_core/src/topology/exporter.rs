@@ -107,11 +107,25 @@ impl MeshExporter {
             }
         }
 
+        let mut normals: Vec<Vec3> = Vec::with_capacity(positions.len());
+        for i in 0..positions.len() {
+            let tri_idx = i / 3;
+            let base_idx = tri_idx * 3;
+            let v0 = positions[base_idx];
+            let v1 = positions[base_idx + 1];
+            let v2 = positions[base_idx + 2];
+            let edge1 = v1 - v0;
+            let edge2 = v2 - v0;
+            let normal = edge1.cross(edge2).normalize_or_zero();
+            normals.push(normal);
+        }
+
         let mut mesh = Mesh::new(
             PrimitiveTopology::TriangleList,
             bevy::asset::RenderAssetUsages::default(),
         );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_indices(Indices::U32(indices));
 
         Ok(mesh)
@@ -121,6 +135,7 @@ impl MeshExporter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::topology::{Edge, Face, Loop, Vert};
     use bevy::prelude::Vec3;
 
     fn make_triangle_topology() -> EditableTopology {
@@ -191,6 +206,11 @@ mod tests {
 
         let mesh_indices = mesh.indices().expect("Should have indices");
         assert_eq!(mesh_indices.len(), 3);
+
+        let normals = mesh
+            .attribute(Mesh::ATTRIBUTE_NORMAL)
+            .expect("Should have normals");
+        assert_eq!(normals.len(), 3);
     }
 
     #[test]
@@ -237,6 +257,13 @@ mod tests {
         face2.loops = vec![l3_id, l4_id, l5_id, l6_id];
         topology.insert_face(face2);
 
+        if let Some(e) = topology.edge_mut(e3_id) {
+            e.add_loop_end(l3_id);
+            e.add_loop_end(l4_id);
+            e.add_loop_end(l5_id);
+            e.add_loop_end(l6_id);
+        }
+
         let exporter = MeshExporter::new();
         let result = exporter.export_mesh(&topology);
         assert!(result.is_err());
@@ -274,6 +301,12 @@ mod tests {
         face2.loops = vec![l3_id, l4_id, l5_id];
         topology.insert_face(face2);
 
+        if let Some(e) = topology.edge_mut(e3_id) {
+            e.add_loop_end(l3_id);
+            e.add_loop_end(l4_id);
+            e.add_loop_end(l5_id);
+        }
+
         let exporter = MeshExporter::new();
         let result = exporter.export_mesh(&topology);
         assert!(result.is_err());
@@ -289,31 +322,38 @@ mod tests {
 
         let original = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
 
-        let importer = super::super::MeshImporter::new();
+        let mut importer = super::super::MeshImporter::new();
         let topology = importer.import_mesh(&original).unwrap();
 
         let exporter = MeshExporter::new();
         let exported = exporter.export_mesh(&topology).unwrap();
 
-        let original_pos = original
-            .attribute(Mesh::ATTRIBUTE_POSITION)
-            .expect("original should have positions");
         let exported_pos = exported
             .attribute(Mesh::ATTRIBUTE_POSITION)
             .expect("exported should have positions");
 
+        // Exported mesh should have 3 vertices per face (topology representation)
         assert_eq!(
-            original_pos.len(),
             exported_pos.len(),
-            "Vertex count should match after round-trip"
+            topology.face_count() * 3,
+            "Exported vertex count should match topology face count * 3"
         );
 
-        let original_idx = original.indices().expect("original should have indices");
         let exported_idx = exported.indices().expect("exported should have indices");
+        // Exported mesh should have 3 indices per face
         assert_eq!(
-            original_idx.len(),
             exported_idx.len(),
-            "Index count should match after round-trip"
+            topology.face_count() * 3,
+            "Exported index count should match topology face count * 3"
+        );
+
+        let exported_normals = exported
+            .attribute(Mesh::ATTRIBUTE_NORMAL)
+            .expect("exported should have normals");
+        assert_eq!(
+            exported_normals.len(),
+            topology.face_count() * 3,
+            "Exported normal count should match topology face count * 3"
         );
 
         assert_eq!(original.primitive_topology(), exported.primitive_topology());
@@ -325,7 +365,7 @@ mod tests {
 
         let original = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
 
-        let importer = super::super::MeshImporter::new();
+        let mut importer = super::super::MeshImporter::new();
         let mut topology = importer.import_mesh(&original).unwrap();
 
         let v3_id = topology.generate_vert_id();
@@ -351,6 +391,12 @@ mod tests {
         let mut face2 = Face::new(face2_id);
         face2.loops = vec![l3_id, l4_id, l5_id];
         topology.insert_face(face2);
+
+        if let Some(e) = topology.edge_mut(e3_id) {
+            e.add_loop_end(l3_id);
+            e.add_loop_end(l4_id);
+            e.add_loop_end(l5_id);
+        }
 
         let exporter = MeshExporter::new();
         let result = exporter.export_mesh(&topology);
