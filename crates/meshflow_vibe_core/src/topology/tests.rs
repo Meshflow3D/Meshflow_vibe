@@ -35,21 +35,23 @@ mod tests {
         topology.insert_edge(e1);
         topology.insert_edge(e2);
 
+        // Create face first
+        let face_id = topology.generate_face_id();
+
         // Create 3 loops for the triangle face
         let l0_id = topology.generate_loop_id();
         let l1_id = topology.generate_loop_id();
         let l2_id = topology.generate_loop_id();
 
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
-        let mut loop1 = Loop::new(l1_id, FaceId::dummy(), e1_id, v1_id, 1);
-        let mut loop2 = Loop::new(l2_id, FaceId::dummy(), e2_id, v2_id, 2);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
+        let mut loop1 = Loop::new(l1_id, face_id, e1_id, v1_id, 1);
+        let mut loop2 = Loop::new(l2_id, face_id, e2_id, v2_id, 2);
 
         topology.loops.insert(l0_id, loop0);
         topology.loops.insert(l1_id, loop1);
         topology.loops.insert(l2_id, loop2);
 
         // Create face with the 3 loops
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id, l1_id, l2_id];
 
@@ -91,16 +93,19 @@ mod tests {
         topology.insert_edge(Edge::new(e2_id));
         topology.insert_edge(Edge::new(e3_id));
 
+        // Create face first
+        let face_id = topology.generate_face_id();
+
         // Create 4 loops
         let l0_id = topology.generate_loop_id();
         let l1_id = topology.generate_loop_id();
         let l2_id = topology.generate_loop_id();
         let l3_id = topology.generate_loop_id();
 
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
-        let mut loop1 = Loop::new(l1_id, FaceId::dummy(), e1_id, v1_id, 1);
-        let mut loop2 = Loop::new(l2_id, FaceId::dummy(), e2_id, v2_id, 2);
-        let mut loop3 = Loop::new(l3_id, FaceId::dummy(), e3_id, v3_id, 3);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
+        let mut loop1 = Loop::new(l1_id, face_id, e1_id, v1_id, 1);
+        let mut loop2 = Loop::new(l2_id, face_id, e2_id, v2_id, 2);
+        let mut loop3 = Loop::new(l3_id, face_id, e3_id, v3_id, 3);
 
         topology.loops.insert(l0_id, loop0);
         topology.loops.insert(l1_id, loop1);
@@ -108,7 +113,6 @@ mod tests {
         topology.loops.insert(l3_id, loop3);
 
         // Create face
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id, l1_id, l2_id, l3_id];
 
@@ -138,14 +142,20 @@ mod tests {
         let e0_id = topology.generate_edge_id();
         topology.insert_edge(Edge::new(e0_id));
 
+        let f0_id = topology.generate_face_id();
+
         let l0_id = topology.generate_loop_id();
         let l1_id = topology.generate_loop_id();
 
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
-        let mut loop1 = Loop::new(l1_id, FaceId::dummy(), e0_id, v1_id, 1);
+        let mut loop0 = Loop::new(l0_id, f0_id, e0_id, v0_id, 0);
+        let mut loop1 = Loop::new(l1_id, f0_id, e0_id, v1_id, 1);
 
         topology.loops.insert(l0_id, loop0);
         topology.loops.insert(l1_id, loop1);
+
+        let mut face = Face::new(f0_id);
+        face.loops = vec![l0_id, l1_id];
+        topology.insert_face(face);
 
         let loops = topology.face_loops_for_edge(e0_id);
         assert_eq!(loops.len(), 2);
@@ -210,19 +220,20 @@ mod tests {
         topology.insert_edge(Edge::new(e1_id));
         topology.insert_edge(Edge::new(e2_id));
 
+        let face_id = topology.generate_face_id();
+
         let l0_id = topology.generate_loop_id();
         let l1_id = topology.generate_loop_id();
         let l2_id = topology.generate_loop_id();
 
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
-        let mut loop1 = Loop::new(l1_id, FaceId::dummy(), e1_id, v1_id, 1);
-        let mut loop2 = Loop::new(l2_id, FaceId::dummy(), e2_id, v2_id, 2);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
+        let mut loop1 = Loop::new(l1_id, face_id, e1_id, v1_id, 1);
+        let mut loop2 = Loop::new(l2_id, face_id, e2_id, v2_id, 2);
 
         topology.loops.insert(l0_id, loop0);
         topology.loops.insert(l1_id, loop1);
         topology.loops.insert(l2_id, loop2);
 
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id, l1_id, l2_id];
 
@@ -258,19 +269,20 @@ mod tests {
         topology.insert_edge(Edge::new(e1_id));
         topology.insert_edge(Edge::new(e2_id));
 
+        let face_id = topology.generate_face_id();
+
         let l0_id = topology.generate_loop_id();
         let l1_id = topology.generate_loop_id();
         let l2_id = topology.generate_loop_id();
 
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
-        let mut loop1 = Loop::new(l1_id, FaceId::dummy(), e1_id, v1_id, 1);
-        let mut loop2 = Loop::new(l2_id, FaceId::dummy(), e2_id, v2_id, 2);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
+        let mut loop1 = Loop::new(l1_id, face_id, e1_id, v1_id, 1);
+        let mut loop2 = Loop::new(l2_id, face_id, e2_id, v2_id, 2);
 
         topology.loops.insert(l0_id, loop0);
         topology.loops.insert(l1_id, loop1);
         topology.loops.insert(l2_id, loop2);
 
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id, l1_id, l2_id];
 
@@ -290,12 +302,13 @@ mod tests {
         let e0_id = topology.generate_edge_id();
         topology.insert_edge(Edge::new(e0_id));
 
+        let face_id = topology.generate_face_id();
+
         let l0_id = topology.generate_loop_id();
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
 
         topology.loops.insert(l0_id, loop0);
 
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id];
 
@@ -316,12 +329,13 @@ mod tests {
         let e0_id = topology.generate_edge_id();
         topology.insert_edge(Edge::new(e0_id));
 
+        let face_id = topology.generate_face_id();
+
         let l0_id = topology.generate_loop_id();
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
 
         topology.loops.insert(l0_id, loop0);
 
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id];
 
@@ -364,11 +378,12 @@ mod tests {
 
         let e0_id = topology.generate_edge_id();
         let non_existent_vert_id = VertId::new(uuid::Uuid::new_v4());
+        let face_id = topology.generate_face_id();
 
         topology.insert_edge(Edge::new(e0_id));
 
         let l0_id = topology.generate_loop_id();
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, non_existent_vert_id, 0);
+        let mut loop0 = Loop::new(l0_id, face_id, e0_id, non_existent_vert_id, 0);
 
         topology.loops.insert(l0_id, loop0);
 
@@ -386,11 +401,12 @@ mod tests {
 
         let v0_id = topology.generate_vert_id();
         let non_existent_edge_id = EdgeId::new(uuid::Uuid::new_v4());
+        let face_id = topology.generate_face_id();
 
         topology.insert_vertex(Vert::new(v0_id, Vec3::ZERO));
 
         let l0_id = topology.generate_loop_id();
-        let mut loop0 = Loop::new(l0_id, FaceId::dummy(), non_existent_edge_id, v0_id, 0);
+        let mut loop0 = Loop::new(l0_id, face_id, non_existent_edge_id, v0_id, 0);
 
         topology.loops.insert(l0_id, loop0);
 
@@ -408,17 +424,17 @@ mod tests {
 
         let v0_id = topology.generate_vert_id();
         let e0_id = topology.generate_edge_id();
+        let face_id = topology.generate_face_id();
 
         topology.insert_vertex(Vert::new(v0_id, Vec3::ZERO));
         topology.insert_edge(Edge::new(e0_id));
 
         let l0_id = topology.generate_loop_id();
         // Set index_in_face to wrong value (should be 0, but we set it to 5)
-        let loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 5);
+        let loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 5);
 
         topology.loops.insert(l0_id, loop0);
 
-        let face_id = topology.generate_face_id();
         let mut face = Face::new(face_id);
         face.loops = vec![l0_id];
 
@@ -439,12 +455,13 @@ mod tests {
         let v0_id = topology.generate_vert_id();
         let e0_id = topology.generate_edge_id();
         let non_existent_loop_id = LoopId::new(999);
+        let face_id = topology.generate_face_id();
 
         topology.insert_vertex(Vert::new(v0_id, Vec3::ZERO));
 
         // Create a loop that references the edge
         let l0_id = topology.generate_loop_id();
-        let loop0 = Loop::new(l0_id, FaceId::dummy(), e0_id, v0_id, 0);
+        let loop0 = Loop::new(l0_id, face_id, e0_id, v0_id, 0);
         topology.loops.insert(l0_id, loop0);
 
         // Create edge with valid loop ends
@@ -577,11 +594,11 @@ mod tests {
         let v0_id = topology.generate_vert_id();
         let e0_id = topology.generate_edge_id();
         let f0_id = topology.generate_face_id();
-        let l0_id = topology.generate_loop_id();
 
         topology.insert_vertex(Vert::new(v0_id, Vec3::ZERO));
         topology.insert_edge(Edge::new(e0_id));
 
+        let l0_id = topology.generate_loop_id();
         let mut loop0 = Loop::new(l0_id, f0_id, e0_id, v0_id, 0);
         topology.loops.insert(l0_id, loop0);
 
