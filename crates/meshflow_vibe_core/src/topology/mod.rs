@@ -441,6 +441,15 @@ impl EditableTopology {
                             actual_index: loop_.index_in_face,
                         });
                     }
+
+                    // Check that the loop's face_id matches this face
+                    if loop_.face_id != face.id {
+                        errors.push(TopologyValidationError::LoopFaceIdMismatch {
+                            loop_id: *loop_id,
+                            expected_face_id: face.id,
+                            actual_face_id: loop_.face_id,
+                        });
+                    }
                 }
             }
         }
@@ -481,5 +490,11 @@ pub enum TopologyValidationError {
         loop_id: LoopId,
         expected_index: u32,
         actual_index: u32,
+    },
+    /// A loop's face_id doesn't match the face it's referenced by
+    LoopFaceIdMismatch {
+        loop_id: LoopId,
+        expected_face_id: FaceId,
+        actual_face_id: FaceId,
     },
 }

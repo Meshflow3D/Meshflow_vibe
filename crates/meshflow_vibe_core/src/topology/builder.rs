@@ -76,14 +76,27 @@ impl MeshImporter {
     /// 2. Mesh has index buffer (triangle, quad, or n-gon indices)
     /// 3. All indices reference valid vertices
     /// 4. Resulting topology passes structural validation
+    ///
+    /// # Reusability
+    ///
+    /// The importer can be reused across multiple imports. Internal mapping tables
+    /// are cleared at the start of each import to ensure fresh state.
     pub fn import_mesh(&mut self, mesh: &Mesh) -> Result<EditableTopology, MeshImportError> {
+        // Clear internal mappings to ensure fresh state for each import
+        self.vertex_map.clear();
+        self.face_map.clear();
+        self.edge_map.clear();
+
         // Validate mesh has required attributes
         let positions = self.extract_positions(mesh)?;
 
         // Get indices from mesh
-        let indices = self.extract_indices(mesh)?;
+        let mut indices = self.extract_indices(mesh)?;
 
-        // Build topology from mesh data
+        // Validate that mesh has index buffer (required for face import)
+        if indices.is_empty() {
+            return Err(MeshImportError::MissingIndexBuffer);
+        }
         let mut topology = EditableTopology::with_capacity(
             positions.len(),
             positions.len() * 2, // Estimate
@@ -129,6 +142,10 @@ impl MeshImporter {
     ///
     /// Bevy stores mesh indices in the mesh's internal buffer, not as attributes.
     /// This method extracts them correctly.
+    ///
+    /// # Returns
+    ///
+    /// Returns the index buffer if present. An empty vector indicates no index buffer.
     fn extract_indices(&self, mesh: &Mesh) -> Result<Vec<u32>, MeshImportError> {
         // Bevy 0.18: indices() returns an Indices enum
         match mesh.indices() {
@@ -268,6 +285,12 @@ impl MeshImporter {
             let loop_id = topology.generate_loop_id();
             let loop_ = Loop::new(loop_id, face_id, edge_id, vert_id, index as u32);
             topology.loops.insert(loop_id, loop_);
+
+            // Update edge's loop_ends to reference this loop
+            if let Some(edge) = topology.edge_mut(edge_id) {
+                edge.add_loop_end(loop_id);
+            }
+
             loop_ids.push(loop_id);
         }
 
@@ -300,6 +323,8 @@ pub enum MeshImportError {
     },
     /// Topology validation failed after import
     TopologyValidationError(Vec<TopologyValidationError>),
+    /// Mesh is missing an index buffer (faces cannot be imported without indices)
+    MissingIndexBuffer,
 }
 
 impl std::fmt::Display for MeshImportError {
@@ -336,6 +361,12 @@ impl std::fmt::Display for MeshImportError {
             }
             MeshImportError::TopologyValidationError(errors) => {
                 write!(f, "Topology validation failed: {} errors", errors.len())
+            }
+            MeshImportError::MissingIndexBuffer => {
+                write!(
+                    f,
+                    "Mesh is missing an index buffer (required for face import)"
+                )
             }
         }
     }
@@ -525,5 +556,116 @@ mod tests {
 
         // Manually call is_valid as well
         assert!(topology.is_valid());
+    }
+
+    #[test]
+    fn test_importer_clears_state_between_imports() {
+        // Create a simple cube mesh
+        let mesh1 = Mesh::from(Cuboid::new(1.0, 1.0, 1.0));
+
+        // Import first mesh
+        let mut importer = MeshImporter::new();
+        let topology1 = importer.import_mesh(&mesh1).unwrap();
+        let face_count1 = topology1.face_count();
+
+        // Create a different mesh (cone)
+        let mesh2 = Mesh::from(bevy::math::primitives::Cone {
+            radius: 0.5,
+            height: 1.0,
+        });
+
+        // Import second mesh without calling clear()
+        let topology2 = importer.import_mesh(&mesh2).unwrap();
+        let face_count2 = topology2.face_count();
+
+        // Both should be valid and have different face counts
+        assert!(topology1.is_valid(), "First topology should be valid");
+        assert!(topology2.is_valid(), "Second topology should be valid");
+        assert_eq!(
+            face_count1,
+            topology1.face_count(),
+            "First topology face count should match"
+        );
+        // The second import should not reuse stale IDs from the first
+        assert!(face_count2 > 0, "Second mesh should have faces");
+    }
+
+    #[test]
+    fn test_import_requires_index_buffer() {
+        // Create a mesh with positions but no indices
+        let mut mesh = Mesh::new(
+            bevy::render::render_resource::PrimitiveTopology::TriangleList,
+            bevy::asset::RenderAssetUsages::default(),
+        );
+
+        // Add positions (3 vertices)
+        mesh.insert_attribute(
+            Mesh::ATTRIBUTE_POSITION,
+            vec![
+                bevy::prelude::Vec3::new(0.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(1.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(0.0, 1.0, 0.0),
+            ],
+        );
+
+        // Do not add indices
+
+        let mut importer = MeshImporter::new();
+        let result = importer.import_mesh(&mesh);
+
+        // Should fail with MissingIndexBuffer error
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            MeshImportError::MissingIndexBuffer
+        ));
+    }
+
+    #[test]
+    fn test_import_populates_edge_loop_ends() {
+        // Create a simple triangle mesh
+        let mut mesh = Mesh::new(
+            bevy::render::render_resource::PrimitiveTopology::TriangleList,
+            bevy::asset::RenderAssetUsages::default(),
+        );
+
+        // Add triangle vertices
+        mesh.insert_attribute(
+            Mesh::ATTRIBUTE_POSITION,
+            vec![
+                bevy::prelude::Vec3::new(0.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(1.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(0.0, 1.0, 0.0),
+            ],
+        );
+
+        // Add triangle indices
+        mesh.insert_indices(bevy::mesh::Indices::U32(vec![0, 1, 2]));
+
+        let mut importer = MeshImporter::new();
+        let topology = importer.import_mesh(&mesh).unwrap();
+
+        // Verify that edges have loop_ends populated
+        for edge in topology.edges() {
+            let valid_ends = edge.valid_loop_ends();
+            // Every edge should have at least one loop end
+            assert!(
+                !valid_ends.is_empty(),
+                "Edge {:?} should have at least one loop end",
+                edge.id
+            );
+        }
+
+        // For a single triangle, each edge should have exactly one loop end (boundary edges)
+        let mut total_loop_ends = 0;
+        for edge in topology.edges() {
+            total_loop_ends += edge.valid_loop_ends().len();
+        }
+
+        // A triangle has 3 edges, each with 1 loop end = 3 total
+        assert_eq!(
+            total_loop_ends, 3,
+            "Triangle should have 3 edges with 1 loop end each"
+        );
     }
 }
