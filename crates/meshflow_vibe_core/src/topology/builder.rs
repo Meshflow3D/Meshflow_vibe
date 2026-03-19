@@ -110,7 +110,7 @@ impl MeshImporter {
         }
 
         // Get indices from mesh
-        let mut indices = self.extract_indices(mesh)?;
+        let indices = self.extract_indices(mesh)?;
 
         // Validate that mesh has index buffer (required for face import)
         if indices.is_empty() {
