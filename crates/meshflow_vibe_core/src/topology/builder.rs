@@ -73,9 +73,16 @@ impl MeshImporter {
     ///
     /// This method validates:
     /// 1. Mesh has required position attribute
-    /// 2. Mesh has index buffer (triangle, quad, or n-gon indices)
-    /// 3. All indices reference valid vertices
-    /// 4. Resulting topology passes structural validation
+    /// 2. Mesh primitive topology is TriangleList (line lists, point lists, etc. are unsupported)
+    /// 3. Mesh has index buffer (triangle indices)
+    /// 4. All indices reference valid vertices
+    /// 5. Resulting topology passes structural validation
+    ///
+    /// # Triangle List Assumption
+    ///
+    /// This importer assumes the mesh uses `PrimitiveTopology::TriangleList`.
+    /// Other primitive topologies (LineList, PointList, etc.) will be rejected
+    /// with `MeshImportError::UnsupportedPrimitiveTopology`.
     ///
     /// # Reusability
     ///
@@ -89,6 +96,18 @@ impl MeshImporter {
 
         // Validate mesh has required attributes
         let positions = self.extract_positions(mesh)?;
+
+        // Check primitive topology before extracting indices
+        // Only TriangleList is supported for face-based topology import
+        let primitive_topology = mesh.primitive_topology();
+        if !matches!(
+            primitive_topology,
+            bevy::render::render_resource::PrimitiveTopology::TriangleList
+        ) {
+            return Err(MeshImportError::UnsupportedPrimitiveTopology(
+                primitive_topology,
+            ));
+        }
 
         // Get indices from mesh
         let mut indices = self.extract_indices(mesh)?;
@@ -143,6 +162,11 @@ impl MeshImporter {
     /// Bevy stores mesh indices in the mesh's internal buffer, not as attributes.
     /// This method extracts them correctly.
     ///
+    /// # Assumptions
+    ///
+    /// This method assumes the mesh primitive topology is TriangleList, which
+    /// is verified in `import_mesh` before calling this method.
+    ///
     /// # Returns
     ///
     /// Returns the index buffer if present. An empty vector indicates no index buffer.
@@ -156,6 +180,12 @@ impl MeshImporter {
     }
 
     /// Import faces from mesh indices
+    ///
+    /// # Assumptions
+    ///
+    /// This function assumes indices come from a TriangleList primitive topology,
+    /// which is verified in `import_mesh` before calling this method. Indices are
+    /// grouped into triples (triangles), with 3 indices per face.
     fn import_faces(
         &mut self,
         topology: &mut EditableTopology,
@@ -169,8 +199,7 @@ impl MeshImporter {
             return Ok(());
         }
 
-        // For now, assume triangle mesh (3 indices per face)
-        // This is the most common case and aligns with Bevy's default behavior
+        // Assume triangle mesh (3 indices per face) - verified in import_mesh
         let mut face_index = 0;
         let chunk_size = 3;
 
@@ -325,6 +354,8 @@ pub enum MeshImportError {
     TopologyValidationError(Vec<TopologyValidationError>),
     /// Mesh is missing an index buffer (faces cannot be imported without indices)
     MissingIndexBuffer,
+    /// Mesh uses a primitive topology other than triangle list (e.g., line list, point list)
+    UnsupportedPrimitiveTopology(bevy::render::render_resource::PrimitiveTopology),
 }
 
 impl std::fmt::Display for MeshImportError {
@@ -366,6 +397,13 @@ impl std::fmt::Display for MeshImportError {
                 write!(
                     f,
                     "Mesh is missing an index buffer (required for face import)"
+                )
+            }
+            MeshImportError::UnsupportedPrimitiveTopology(topology) => {
+                write!(
+                    f,
+                    "Unsupported primitive topology: {:?} (only TriangleList is supported)",
+                    topology
                 )
             }
         }
@@ -618,6 +656,73 @@ mod tests {
         assert!(matches!(
             result.unwrap_err(),
             MeshImportError::MissingIndexBuffer
+        ));
+    }
+
+    #[test]
+    fn test_import_unsupported_primitive_topology() {
+        // Create a mesh with LineList primitive topology (unsupported)
+        let mut mesh = Mesh::new(
+            bevy::render::render_resource::PrimitiveTopology::LineList,
+            bevy::asset::RenderAssetUsages::default(),
+        );
+
+        // Add positions (2 vertices)
+        mesh.insert_attribute(
+            Mesh::ATTRIBUTE_POSITION,
+            vec![
+                bevy::prelude::Vec3::new(0.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(1.0, 0.0, 0.0),
+            ],
+        );
+
+        // Add line indices (2 per line)
+        mesh.insert_indices(bevy::mesh::Indices::U32(vec![0, 1]));
+
+        let mut importer = MeshImporter::new();
+        let result = importer.import_mesh(&mesh);
+
+        // Should fail with UnsupportedPrimitiveTopology error
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            MeshImportError::UnsupportedPrimitiveTopology(
+                bevy::render::render_resource::PrimitiveTopology::LineList
+            )
+        ));
+    }
+
+    #[test]
+    fn test_import_point_list_unsupported() {
+        // Create a mesh with PointList primitive topology (unsupported)
+        let mut mesh = Mesh::new(
+            bevy::render::render_resource::PrimitiveTopology::PointList,
+            bevy::asset::RenderAssetUsages::default(),
+        );
+
+        // Add positions (3 vertices)
+        mesh.insert_attribute(
+            Mesh::ATTRIBUTE_POSITION,
+            vec![
+                bevy::prelude::Vec3::new(0.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(1.0, 0.0, 0.0),
+                bevy::prelude::Vec3::new(0.0, 1.0, 0.0),
+            ],
+        );
+
+        // Add point indices (1 per point)
+        mesh.insert_indices(bevy::mesh::Indices::U32(vec![0, 1, 2]));
+
+        let mut importer = MeshImporter::new();
+        let result = importer.import_mesh(&mesh);
+
+        // Should fail with UnsupportedPrimitiveTopology error
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            MeshImportError::UnsupportedPrimitiveTopology(
+                bevy::render::render_resource::PrimitiveTopology::PointList
+            )
         ));
     }
 
