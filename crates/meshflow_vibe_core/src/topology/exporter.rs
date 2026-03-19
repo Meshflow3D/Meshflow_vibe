@@ -39,7 +39,7 @@ impl std::fmt::Display for MeshExportError {
             } => {
                 write!(
                     f,
-                    "Edge {:?} is non-manifold ({} faces, only 2-manifold meshes are supported)",
+                    "Edge {:?} is non-manifold ({} loop-ends, only 2-manifold meshes are supported)",
                     edge_id, face_count
                 )
             }
@@ -98,7 +98,7 @@ impl MeshExporter {
         }
 
         for edge in topology.edges() {
-            let face_count = edge.face_count();
+            let face_count = topology.faces_for_edge(edge.id).len();
             if face_count > 2 {
                 return Err(MeshExportError::NonManifoldEdge {
                     edge_id: edge.id,
@@ -207,10 +207,17 @@ mod tests {
         let mesh_indices = mesh.indices().expect("Should have indices");
         assert_eq!(mesh_indices.len(), 3);
 
-        let normals = mesh
+        let normals_attr = mesh
             .attribute(Mesh::ATTRIBUTE_NORMAL)
             .expect("Should have normals");
-        assert_eq!(normals.len(), 3);
+        if let bevy::mesh::VertexAttributeValues::Float32x3(normals) = normals_attr {
+            assert_eq!(normals.len(), 3);
+            assert!((normals[0][2] - 1.0).abs() < 0.01);
+            assert!((normals[1][2] - 1.0).abs() < 0.01);
+            assert!((normals[2][2] - 1.0).abs() < 0.01);
+        } else {
+            panic!("Normals should be Float32x3");
+        }
     }
 
     #[test]
@@ -265,7 +272,20 @@ mod tests {
         }
 
         let exporter = MeshExporter::new();
+        println!(
+            "Debug: Edge e3 loop_ends: {:?}",
+            topology.edge(e3_id).unwrap().loop_ends
+        );
+        println!("Debug: All edges:");
+        for edge in topology.edges() {
+            println!(
+                "  Edge {:?}: {} faces",
+                edge.id,
+                topology.faces_for_edge(edge.id).len()
+            );
+        }
         let result = exporter.export_mesh(&topology);
+        println!("Debug: Result: {:?}", result);
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -283,8 +303,12 @@ mod tests {
         let e3_id = topology.generate_edge_id();
         topology.insert_edge(Edge::new(e3_id));
 
+        // Create 3 distinct faces sharing the same edge (true non-manifold)
         let face2_id = topology.generate_face_id();
+        let face3_id = topology.generate_face_id();
+        let face4_id = topology.generate_face_id();
 
+        // Face 2 loops
         let l3_id = topology.generate_loop_id();
         let l4_id = topology.generate_loop_id();
         let l5_id = topology.generate_loop_id();
@@ -301,10 +325,53 @@ mod tests {
         face2.loops = vec![l3_id, l4_id, l5_id];
         topology.insert_face(face2);
 
+        // Face 3 loops (different face, same edge)
+        let l6_id = topology.generate_loop_id();
+        let l7_id = topology.generate_loop_id();
+        let l8_id = topology.generate_loop_id();
+
+        let loop6 = Loop::new(l6_id, face3_id, e3_id, v3_id, 0);
+        let loop7 = Loop::new(l7_id, face3_id, e3_id, v3_id, 1);
+        let loop8 = Loop::new(l8_id, face3_id, e3_id, v3_id, 2);
+
+        topology.loops.insert(l6_id, loop6);
+        topology.loops.insert(l7_id, loop7);
+        topology.loops.insert(l8_id, loop8);
+
+        let mut face3 = Face::new(face3_id);
+        face3.loops = vec![l6_id, l7_id, l8_id];
+        topology.insert_face(face3);
+
+        // Face 4 loops (different face, same edge)
+        let l9_id = topology.generate_loop_id();
+        let l10_id = topology.generate_loop_id();
+        let l11_id = topology.generate_loop_id();
+
+        let loop9 = Loop::new(l9_id, face4_id, e3_id, v3_id, 0);
+        let loop10 = Loop::new(l10_id, face4_id, e3_id, v3_id, 1);
+        let loop11 = Loop::new(l11_id, face4_id, e3_id, v3_id, 2);
+
+        topology.loops.insert(l9_id, loop9);
+        topology.loops.insert(l10_id, loop10);
+        topology.loops.insert(l11_id, loop11);
+
+        let mut face4 = Face::new(face4_id);
+        face4.loops = vec![l9_id, l10_id, l11_id];
+        topology.insert_face(face4);
+
+        // Add all 6 loop ends to the edge (3 faces * 2 loops per face that use this edge)
+        // Actually each face uses 3 different edges, so we need to pick 2 loops per face
+        // that reference e3_id. Each face has 3 loops all using e3_id.
         if let Some(e) = topology.edge_mut(e3_id) {
             e.add_loop_end(l3_id);
             e.add_loop_end(l4_id);
             e.add_loop_end(l5_id);
+            e.add_loop_end(l6_id);
+            e.add_loop_end(l7_id);
+            e.add_loop_end(l8_id);
+            e.add_loop_end(l9_id);
+            e.add_loop_end(l10_id);
+            e.add_loop_end(l11_id);
         }
 
         let exporter = MeshExporter::new();
@@ -347,14 +414,20 @@ mod tests {
             "Exported index count should match topology face count * 3"
         );
 
-        let exported_normals = exported
+        let exported_normals_attr = exported
             .attribute(Mesh::ATTRIBUTE_NORMAL)
             .expect("exported should have normals");
-        assert_eq!(
-            exported_normals.len(),
-            topology.face_count() * 3,
-            "Exported normal count should match topology face count * 3"
-        );
+        if let bevy::mesh::VertexAttributeValues::Float32x3(exported_normals) =
+            exported_normals_attr
+        {
+            assert_eq!(
+                exported_normals.len(),
+                topology.face_count() * 3,
+                "Exported normal count should match topology face count * 3"
+            );
+        } else {
+            panic!("Normals should be Float32x3");
+        }
 
         assert_eq!(original.primitive_topology(), exported.primitive_topology());
     }
@@ -374,8 +447,12 @@ mod tests {
         let e3_id = topology.generate_edge_id();
         topology.insert_edge(Edge::new(e3_id));
 
+        // Create 3 distinct faces sharing the same edge (true non-manifold)
         let face2_id = topology.generate_face_id();
+        let face3_id = topology.generate_face_id();
+        let face4_id = topology.generate_face_id();
 
+        // Face 2 loops
         let l3_id = topology.generate_loop_id();
         let l4_id = topology.generate_loop_id();
         let l5_id = topology.generate_loop_id();
@@ -392,10 +469,51 @@ mod tests {
         face2.loops = vec![l3_id, l4_id, l5_id];
         topology.insert_face(face2);
 
+        // Face 3 loops (different face, same edge)
+        let l6_id = topology.generate_loop_id();
+        let l7_id = topology.generate_loop_id();
+        let l8_id = topology.generate_loop_id();
+
+        let loop6 = Loop::new(l6_id, face3_id, e3_id, v3_id, 0);
+        let loop7 = Loop::new(l7_id, face3_id, e3_id, v3_id, 1);
+        let loop8 = Loop::new(l8_id, face3_id, e3_id, v3_id, 2);
+
+        topology.loops.insert(l6_id, loop6);
+        topology.loops.insert(l7_id, loop7);
+        topology.loops.insert(l8_id, loop8);
+
+        let mut face3 = Face::new(face3_id);
+        face3.loops = vec![l6_id, l7_id, l8_id];
+        topology.insert_face(face3);
+
+        // Face 4 loops (different face, same edge)
+        let l9_id = topology.generate_loop_id();
+        let l10_id = topology.generate_loop_id();
+        let l11_id = topology.generate_loop_id();
+
+        let loop9 = Loop::new(l9_id, face4_id, e3_id, v3_id, 0);
+        let loop10 = Loop::new(l10_id, face4_id, e3_id, v3_id, 1);
+        let loop11 = Loop::new(l11_id, face4_id, e3_id, v3_id, 2);
+
+        topology.loops.insert(l9_id, loop9);
+        topology.loops.insert(l10_id, loop10);
+        topology.loops.insert(l11_id, loop11);
+
+        let mut face4 = Face::new(face4_id);
+        face4.loops = vec![l9_id, l10_id, l11_id];
+        topology.insert_face(face4);
+
+        // Add all loop ends to the edge
         if let Some(e) = topology.edge_mut(e3_id) {
             e.add_loop_end(l3_id);
             e.add_loop_end(l4_id);
             e.add_loop_end(l5_id);
+            e.add_loop_end(l6_id);
+            e.add_loop_end(l7_id);
+            e.add_loop_end(l8_id);
+            e.add_loop_end(l9_id);
+            e.add_loop_end(l10_id);
+            e.add_loop_end(l11_id);
         }
 
         let exporter = MeshExporter::new();
