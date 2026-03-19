@@ -128,7 +128,7 @@ echo "Size: $(ls -lh "$DMG_PATH" | awk '{print $5}')"
 
 # Verify DMG integrity
 echo "Verifying DMG..."
-DMG_VERIFY_OUTPUT=$(hdiutil verify "$DMG_PATH" 2>&1)
+DMG_VERIFY_OUTPUT=$(hdiutil verify "$DMG_PATH" 2>&1 || echo "")
 echo "$DMG_VERIFY_OUTPUT"
 if echo "$DMG_VERIFY_OUTPUT" | grep -q "is VALID"; then
     echo "DMG verification passed"

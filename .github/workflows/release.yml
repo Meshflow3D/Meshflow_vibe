@@ -105,7 +105,7 @@ jobs:
           # Try to get a working certificate identifier (handle numbered output like "  1) ABC123...")
           # Use || true to prevent pipefail from failing when no match is found
           CERT_LINE=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" 2>/dev/null | \
-            grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 || true)
+            grep -E "^[[:space:]]*[0-9]+\)[[:space:]]*[0-9A-F]{40}" | head -1 || echo "")
           
           if [ -n "$CERT_LINE" ]; then
             CERT_IDENTIFIER=$(echo "$CERT_LINE" | sed -E 's/^[[:space:]]*[0-9]+\)[[:space:]]*([0-9A-F]{40}).*/\1/')
@@ -161,7 +161,7 @@ jobs:
         run: |
           echo "Submitting for notarization..."
           
-          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
           if [ -z "$DMG_PATH" ]; then
             echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
             exit 1
@@ -215,7 +215,7 @@ jobs:
         run: |
           echo "Stapling notarization ticket..."
           
-          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
           if [ -z "$DMG_PATH" ]; then
             echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
             exit 1
@@ -234,7 +234,7 @@ jobs:
           echo "Performing final Gatekeeper validation..."
           
           APP_BUNDLE="build/${{ env.APP_NAME }}.app"
-          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1)
+          DMG_PATH=$(ls build/meshflow-vibe-*.dmg 2>/dev/null | head -1 || echo "")
           if [ -z "$DMG_PATH" ]; then
             echo "::error::No DMG file found matching build/meshflow-vibe-*.dmg"
             exit 1
