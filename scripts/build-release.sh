@@ -6,9 +6,10 @@ BUILD_DIR="build"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Validate we're at repository root (check for .git directory and Cargo.toml)
-if [ ! -d "$PROJECT_ROOT/.git" ]; then
-    echo "ERROR: Not at repository root (no .git directory found)"
+# Validate we're at repository root (check for .git directory or file and Cargo.toml)
+# In git worktrees, .git is a file containing a reference to the actual gitdir
+if [ ! -e "$PROJECT_ROOT/.git" ] || { [ -f "$PROJECT_ROOT/.git" ] && [ ! -s "$PROJECT_ROOT/.git" ]; }; then
+    echo "ERROR: Not at repository root (no valid .git file or directory found)"
     echo "Current directory: $(pwd)"
     echo "Expected root: $PROJECT_ROOT"
     exit 1
@@ -98,6 +99,19 @@ chmod +x "$APP_BUNDLE/Contents/MacOS/cube_demo"
 echo "Copying assets to .app bundle..."
 cp -r "$PROJECT_ROOT/assets" "$APP_BUNDLE/Contents/MacOS/"
 
+# Sign the app bundle with ad-hoc signature for local testing
+# This creates a valid codesignature that passes Gatekeeper checks
+echo "Signing app bundle..."
+codesign --sign - --force --deep --verbose=2 "$APP_BUNDLE"
+
+# Verify the signature before proceeding
+echo "Verifying app bundle signature..."
+if ! codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE" 2>&1; then
+    echo "ERROR: App bundle signature verification failed"
+    exit 1
+fi
+echo "App bundle signature valid"
+
 # Create DMG using hdiutil (built-in macOS tool)
 echo "Creating DMG: $DMG_PATH"
 hdiutil create -volname "$APP_NAME" \
@@ -110,6 +124,16 @@ hdiutil create -volname "$APP_NAME" \
 echo "=== Build Complete ==="
 echo "DMG location: $DMG_PATH"
 echo "Size: $(ls -lh "$DMG_PATH" | awk '{print $5}')"
+
+# Verify DMG integrity
+echo "Verifying DMG..."
+DMG_VERIFY_OUTPUT=$(hdiutil verify "$DMG_PATH" 2>&1)
+echo "$DMG_VERIFY_OUTPUT"
+if echo "$DMG_VERIFY_OUTPUT" | grep -q "is VALID"; then
+    echo "DMG verification passed"
+else
+    echo "WARNING: DMG verification may have issues"
+fi
 
 # Display DMG info using ls (hdiutil info doesn't accept file paths as arguments)
 echo "DMG details:"
