@@ -194,7 +194,8 @@ jobs:
           
           # Parse submission ID deterministically using awk (avoids fragile pipe-to-head)
           # Looking for line format: "id: <uuid>" with optional leading whitespace
-          SUBMISSION_ID=$(awk '/^[[:space:]]*id:/{gsub(/^[[:space:]]*id:[[:space:]]*/, ""); print; exit}' "$NOTARIZATION_LOG")
+          # Use || true to prevent set -e from crashing before fallback logic
+          SUBMISSION_ID=$(awk '/^[[:space:]]*id:/{gsub(/^[[:space:]]*id:[[:space:]]*/, ""); print; exit}' "$NOTARIZATION_LOG" || true)
           
           if [ -z "$SUBMISSION_ID" ]; then
             echo "::error::Could not extract submission ID from notarization output"
