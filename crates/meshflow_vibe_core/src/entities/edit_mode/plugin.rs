@@ -66,7 +66,7 @@ impl Plugin for EditModePlugin {
 ///
 /// If eligible, adds `InEditMode` marker component to trigger cleanup callbacks.
 /// If a session is already active, exits it properly first.
-fn handle_enter_edit_mode(
+pub(crate) fn handle_enter_edit_mode(
     mut commands: Commands,
     mut edit_session: ResMut<EditSession>,
     topology_registry: Res<EditableTopologyRegistry>,
@@ -78,16 +78,7 @@ fn handle_enter_edit_mode(
     for event in enter_events.read() {
         let entity = event.entity;
 
-        // Check if a session is already active
-        if edit_session.is_active() {
-            if let Some(active_entity) = edit_session.active_entity() {
-                on_exit.write(OnExitEditMode(active_entity));
-                commands.entity(active_entity).remove::<InEditMode>();
-            }
-            edit_session.exit();
-        }
-
-        // Check eligibility
+        // Check eligibility first before modifying session state
         let Ok(owner) = owner_query.get(entity) else {
             continue; // Entity doesn't have TopologyOwner
         };
@@ -102,7 +93,22 @@ fn handle_enter_edit_mode(
             continue;
         }
 
-        // Eligible - enter edit mode
+        // Verify topology exists in registry
+        if !topology_registry.contains(event.topology_id) {
+            eprintln!("DEBUG: Topology {:?} not in registry", event.topology_id);
+            continue;
+        }
+
+        // Eligible - check if we need to exit existing session first
+        if edit_session.is_active() {
+            if let Some(active_entity) = edit_session.active_entity() {
+                on_exit.write(OnExitEditMode(active_entity));
+                commands.entity(active_entity).remove::<InEditMode>();
+            }
+            edit_session.exit();
+        }
+
+        // Enter edit mode for eligible request
         edit_session.enter(entity, event.topology_id);
         commands.entity(entity).insert(InEditMode);
         on_enter.write(OnEnterEditMode(entity));

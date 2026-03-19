@@ -144,6 +144,8 @@ pub fn is_edit_mode_eligible(_entity: Entity, owner: Option<&TopologyOwner>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy::ecs::message::Messages;
+    use bevy::prelude::Entity;
 
     #[test]
     fn test_edit_session_new() {
@@ -217,14 +219,189 @@ mod tests {
         app.init_resource::<crate::EditableTopologyRegistry>()
             .add_plugins(super::plugin::EditModePlugin);
 
-        // Register a topology so the entity is eligible for edit mode
+        // Verify registry exists
+        let registry = app
+            .world()
+            .get_resource::<crate::EditableTopologyRegistry>()
+            .expect("Registry should exist");
+        assert!(registry.is_empty());
+    }
+
+    #[test]
+    fn test_edit_session_preserved_on_invalid_topology_id() {
+        use bevy::app::App;
+
+        let mut app = App::new();
+        app.init_resource::<EditSession>()
+            .init_resource::<crate::EditableTopologyRegistry>()
+            .init_resource::<Messages<EnterEditMode>>()
+            .insert_resource(SubSelectionMode::default())
+            .add_plugins(super::plugin::EditModePlugin)
+            .add_systems(bevy::app::Update, super::plugin::handle_enter_edit_mode);
+        app.update();
+
+        let topology_id = TopologyId::new(100);
+        let wrong_topology_id = TopologyId::new(999);
+
+        let entity1 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+        let entity2 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+
         let mut registry = app
             .world_mut()
             .get_resource_mut::<crate::EditableTopologyRegistry>()
             .expect("Registry should exist");
-        let topology_id = registry.insert(crate::topology::EditableTopology::new());
+        registry.insert_with_id(topology_id, crate::topology::EditableTopology::new());
 
-        // Verify registry contains the topology
-        assert!(registry.contains(topology_id));
+        let mut session = app.world_mut().get_resource_mut::<EditSession>().unwrap();
+        session.enter(entity1, topology_id);
+        let active_entity_before = session.active_entity();
+        app.world_mut()
+            .entity_mut(entity1)
+            .insert(super::InEditMode);
+
+        let wrong_id_event = EnterEditMode {
+            entity: entity2,
+            topology_id: wrong_topology_id,
+        };
+
+        app.world_mut()
+            .resource_mut::<Messages<EnterEditMode>>()
+            .write(wrong_id_event);
+        app.update();
+
+        let session = app.world().get_resource::<EditSession>().unwrap();
+        assert_eq!(session.active_entity(), active_entity_before);
+    }
+
+    #[test]
+    fn test_edit_session_replaced_on_eligible_request() {
+        use bevy::app::App;
+
+        let mut app = App::new();
+        app.init_resource::<EditSession>()
+            .init_resource::<crate::EditableTopologyRegistry>()
+            .init_resource::<Messages<EnterEditMode>>()
+            .insert_resource(SubSelectionMode::default())
+            .add_plugins(super::plugin::EditModePlugin)
+            .add_systems(bevy::app::Update, super::plugin::handle_enter_edit_mode);
+        app.update();
+
+        let topology_id = TopologyId::new(100);
+
+        let entity1 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+        let entity2 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+
+        let mut registry = app
+            .world_mut()
+            .get_resource_mut::<crate::EditableTopologyRegistry>()
+            .expect("Registry should exist");
+        registry.insert_with_id(topology_id, crate::topology::EditableTopology::new());
+
+        let mut session = app.world_mut().get_resource_mut::<EditSession>().unwrap();
+        session.enter(entity1, topology_id);
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity1));
+
+        let eligible_event = EnterEditMode {
+            entity: entity2,
+            topology_id,
+        };
+
+        app.world_mut()
+            .resource_mut::<Messages<EnterEditMode>>()
+            .write(eligible_event);
+        app.update();
+
+        let session = app.world().get_resource::<EditSession>().unwrap();
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity2));
+    }
+
+    #[test]
+    fn test_edit_session_preserved_on_missing_topology_owner() {
+        use bevy::app::App;
+
+        let mut app = App::new();
+        app.init_resource::<EditSession>()
+            .init_resource::<crate::EditableTopologyRegistry>()
+            .init_resource::<Messages<EnterEditMode>>()
+            .insert_resource(SubSelectionMode::default())
+            .add_plugins(super::plugin::EditModePlugin)
+            .add_systems(bevy::app::Update, super::plugin::handle_enter_edit_mode);
+        app.update();
+
+        let topology_id = TopologyId::new(100);
+
+        let entity1 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+        let entity2 = app.world_mut().spawn(()).id();
+
+        let mut registry = app
+            .world_mut()
+            .get_resource_mut::<crate::EditableTopologyRegistry>()
+            .expect("Registry should exist");
+        registry.insert_with_id(topology_id, crate::topology::EditableTopology::new());
+
+        let mut session = app.world_mut().get_resource_mut::<EditSession>().unwrap();
+        session.enter(entity1, topology_id);
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity1));
+        app.world_mut()
+            .entity_mut(entity1)
+            .insert(super::InEditMode);
+
+        let no_owner_event = EnterEditMode {
+            entity: entity2,
+            topology_id,
+        };
+
+        app.world_mut()
+            .resource_mut::<Messages<EnterEditMode>>()
+            .write(no_owner_event);
+        app.update();
+
+        let session = app.world().get_resource::<EditSession>().unwrap();
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity1));
+    }
+
+    #[test]
+    fn test_edit_session_preserved_on_missing_registry_entry() {
+        use bevy::app::App;
+
+        let mut app = App::new();
+        app.init_resource::<EditSession>()
+            .init_resource::<crate::EditableTopologyRegistry>()
+            .init_resource::<Messages<EnterEditMode>>()
+            .insert_resource(SubSelectionMode::default())
+            .add_plugins(super::plugin::EditModePlugin)
+            .add_systems(bevy::app::Update, super::plugin::handle_enter_edit_mode);
+        app.update();
+
+        let topology_id = TopologyId::new(100);
+
+        let entity1 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+        let entity2 = app.world_mut().spawn(TopologyOwner { topology_id }).id();
+
+        let mut session = app.world_mut().get_resource_mut::<EditSession>().unwrap();
+        session.enter(entity1, topology_id);
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity1));
+        app.world_mut()
+            .entity_mut(entity1)
+            .insert(super::InEditMode);
+
+        let missing_registry_event = EnterEditMode {
+            entity: entity2,
+            topology_id,
+        };
+
+        app.world_mut()
+            .resource_mut::<Messages<EnterEditMode>>()
+            .write(missing_registry_event);
+        app.update();
+
+        let session = app.world().get_resource::<EditSession>().unwrap();
+        assert!(session.is_active());
+        assert_eq!(session.active_entity(), Some(entity1));
     }
 }

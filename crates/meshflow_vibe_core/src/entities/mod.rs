@@ -294,6 +294,11 @@ impl EditableTopologyRegistry {
         id
     }
 
+    /// Insert a topology with a specific ID (for testing).
+    pub fn insert_with_id(&mut self, id: TopologyId, topology: EditableTopology) {
+        self.topologies.insert(id, topology);
+    }
+
     /// Get a reference to a topology by ID.
     pub fn get(&self, id: TopologyId) -> Option<&EditableTopology> {
         self.topologies.get(&id)

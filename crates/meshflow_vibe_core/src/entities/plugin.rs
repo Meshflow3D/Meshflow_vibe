@@ -1,7 +1,7 @@
 use super::{
     despawn_entities_by_source_system, despawn_entities_system, generate_tangents_system,
-    BridgeTag, ComponentEditor, HasRuntimeData, IdentityData, InternalNote, MainCamera,
-    SpawnSource, UICamera,
+    BridgeTag, ComponentEditor, EditableTopologyRegistry, HasRuntimeData, IdentityData,
+    InternalNote, MainCamera, SpawnSource, UICamera,
 };
 use crate::entities::{editable::ClassTypePlugin, PromptImportSettings};
 use bevy::app::{App, Plugin, Update};
@@ -29,6 +29,7 @@ impl Plugin for EntityPlugin {
             //
             // Resources
             //
+            .insert_resource(EditableTopologyRegistry::default())
             .insert_resource(ComponentEditor::default())
             .insert_resource(PromptImportSettings::default())
             //
